@@ -1,6 +1,10 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 typedef struct config *config_p;
 typedef struct config {
@@ -10,7 +14,7 @@ typedef struct config {
     int mq_max;
 } Config;
 
-config_p configuration() {
+config_p load_configuration() {
     config_p configuration = (config_p)malloc(sizeof(Config));
 
     FILE *config;
@@ -36,4 +40,17 @@ config_p configuration() {
         }
     }
     return configuration;
+}
+
+void create_doctor_processes(int n, int shift_length){
+  int i;
+  pid_t id;
+
+  for(i = 0; i < n; i++){
+    if((id = fork()) == 0){
+      sleep(shift_length);
+      exit(0);
+    }
+  }
+  return;
 }

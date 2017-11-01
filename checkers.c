@@ -1,6 +1,4 @@
-#include <init.c>
-#include <stdio.h>
-#include <stdlib.h>
+#include "header.h"
 
 void check_memory_char(char *s){
   if(!s){

@@ -13,7 +13,7 @@ config_p load_configuration() {
   check_memory_char(str);
 
   config = fopen("config.txt", "r");
-  for(line = 0; line < 4; line++){
+  for(line = 0; line < 4; line++) {
     fscanf(config, "%s", str);
     token = strtok(str, "=");
     token = strtok(NULL, "=");
@@ -31,15 +31,20 @@ config_p load_configuration() {
   return configuration;
 }
 
-void create_doctor_processes(int n, int shift_length){
+void create_doctor_processes(int n, int shift_length) {
   int i;
   pid_t id;
 
-  for(i = 0; i < n; i++){
-    if((id = fork()) == 0){
+  for(i = 0; i < n; i++) {
+    if((id = fork()) == 0) {
       sleep(shift_length);
       exit(0);
     }
   }
   return;
+}
+
+void create_shared_memory() {
+    SHM = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
+    return;
 }

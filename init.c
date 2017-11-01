@@ -31,10 +31,6 @@ config_p load_configuration() {
   return configuration;
 }
 
-void print_conf(config_p config){
-  printf("triage = %d\ndoctors = %d\nshift_length = %d\nmq_max = %d", config -> triage, config -> doctors, config -> shift_length, config -> mq_max);
-}
-
 void create_doctor_processes(int n, int shift_length){
   int i;
   pid_t id;

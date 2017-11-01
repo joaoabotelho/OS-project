@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <pthread.h>
 
 int SHM;
 #define CHAR_SIZE 1024

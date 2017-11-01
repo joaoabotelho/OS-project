@@ -44,7 +44,30 @@ void create_doctor_processes(int n, int shift_length) {
   return;
 }
 
+
 void create_shared_memory() {
     SHM = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
     return;
+}
+
+void* worker(void* i) {
+  printf("Ola");
+  return NULL;
+}
+
+void create_triage_threads(int n){
+  pthread_t threads[n];
+  int id[n];
+  int i;
+
+  for(i = 0; i < n; i++){
+    id[i] = i;
+    pthread_create(&threads[i], NULL, worker, &id[i]);
+  }
+
+  for(i = 0; i < n; i++){
+    pthread_join(threads[i], NULL);
+  }
+
+  return;
 }

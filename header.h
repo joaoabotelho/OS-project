@@ -6,8 +6,11 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <pthread.h>
 
+int SHM;
 #define CHAR_SIZE 1024
 
 typedef struct config *config_p;
@@ -17,6 +20,15 @@ typedef struct config {
     int shift_length;
     int mq_max;
 } Config;
+
+typedef struct stats *stats_p;
+typedef struct stats {
+  int examined;
+  int treated;
+  float time_bf_triage;
+  float time_betw_triage_attend;
+  float total_time;
+} Stats;
 
 void check_memory_char(char *s);
 void check_memory_int(int i);

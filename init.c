@@ -31,28 +31,46 @@ config_p load_configuration() {
   return configuration;
 }
 
-void create_doctor_processes(int n, int shift_length) {
-  int i;
-  pid_t id;
-
-  for(i = 0; i < n; i++) {
-    if((id = fork()) == 0) {
-      sleep(shift_length);
-      exit(0);
-    }
+stats_p create_shared_memory() {
+  shm_id = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
+  if(shm_id == -1){
+    perror("Error: ");
   }
-  return;
-}
-
-
-void create_shared_memory() {
-    SHM = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
-    return;
+  stats_p shm_p = shmat(shm_id, NULL, 0);
+  return shm_p;
 }
 
 void* worker(void* i) {
   printf("Ola");
   return NULL;
+}
+
+void create_doctor_processes(int n, int shift_length, stats_p stat) {
+  int i;
+  pid_t id;
+
+  if((id = fork()))
+    return;
+
+  for(i = 0; i < n; i++) {
+    if(!(id = fork())){
+      start_shift(shift_length);
+      exit(0);
+    }
+  }
+
+  while(TRUE){
+    wait(NULL);
+    if(!(id = fork())){
+      start_shift(shift_length);
+      exit(0);
+    }
+  }
+}
+
+void start_shift(int shift_length) {
+  sleep(shift_length);
+  return;
 }
 
 void create_triage_threads(int n){

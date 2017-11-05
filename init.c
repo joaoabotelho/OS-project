@@ -58,20 +58,9 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
       exit(0);
     }
   }
-
-  while(TRUE){
-    wait(NULL);
-    if(!(id = fork())){
-      start_shift(shift_length);
-      exit(0);
-    }
-  }
+  replacing_doctors(shift_length);
 }
 
-void start_shift(int shift_length) {
-  sleep(shift_length);
-  return;
-}
 
 void create_triage_threads(int n){
   pthread_t threads[n];

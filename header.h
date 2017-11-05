@@ -52,6 +52,10 @@ int shm_id;
 pacients_list_p queue_head;
 pacients_list_p queue_tail;
 
+stats_p statistics;
+
+config_p configuration;
+
 //checkers.c
 void check_memory_char(char *s);
 void check_memory_int(int i);
@@ -59,12 +63,16 @@ void check_memory_config(config_p c);
 
 //init.c
 config_p load_configuration();
-void create_triage_threads(int n);
-void create_doctor_processes(int n, int shift_length, stats_p stat);
-void start_shift(int shift_length);
 stats_p create_shared_memory();
+void create_doctor_processes(int n, int shift_length, stats_p stat);
+void create_triage_threads(int n);
+void start_shift(int shift_length);
 
 //queue_actions.c
 void print_queue();
 void append(pacient_p pacient);
+
+//triage.c
+void replacing_doctors(int shift_length);
+
 #endif

@@ -40,11 +40,6 @@ stats_p create_shared_memory() {
   return shm_p;
 }
 
-void* worker(void* i) {
-  printf("Ola");
-  return NULL;
-}
-
 void create_doctor_processes(int n, int shift_length, stats_p stat) {
   int i;
   pid_t id;
@@ -52,15 +47,24 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
   if((id = fork()))
     return;
 
+  signal(SIGINT, terminate_doctors);
+
   for(i = 0; i < n; i++) {
     if(!(id = fork())){
+      signal(SIGINT, SIG_IGN);
+      printf("[%ld] Created\n", (long)getpid());
       start_shift(shift_length);
+      printf("[%ld] Destroyed\n", (long)getpid());
       exit(0);
     }
   }
   replacing_doctors(shift_length);
 }
 
+void* worker(void* i) {
+  printf("IM WORKING\n");
+  return NULL;
+}
 
 void create_triage_threads(int n){
   pthread_t threads[n];
@@ -75,6 +79,5 @@ void create_triage_threads(int n){
   for(i = 0; i < n; i++){
     pthread_join(threads[i], NULL);
   }
-
-  return;
+ return;
 }

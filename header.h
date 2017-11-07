@@ -61,6 +61,12 @@ void check_memory_char(char *s);
 void check_memory_int(int i);
 void check_memory_config(config_p c);
 
+//doctors.c
+void write_to_statistics_p(float new_time);
+void replacing_doctors(int shift_length);
+void start_shift(int shift_length);
+void terminate_doctors(int signum);
+
 //init.c
 config_p load_configuration();
 stats_p create_shared_memory();
@@ -71,8 +77,5 @@ void start_shift(int shift_length);
 //queue_actions.c
 void print_queue();
 void append(pacient_p pacient);
-
-//triage.c
-void replacing_doctors(int shift_length);
 
 #endif

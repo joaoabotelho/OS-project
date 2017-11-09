@@ -62,9 +62,9 @@ void check_memory_int(int i);
 void check_memory_config(config_p c);
 
 //doctors.c
-void write_to_statistics_p(float new_time);
+void write_to_statistics_p();
 void replacing_doctors(int shift_length);
-void start_shift(int shift_length);
+void start_shift();
 void terminate_doctors(int signum);
 
 //init.c
@@ -72,10 +72,12 @@ config_p load_configuration();
 stats_p create_shared_memory();
 void create_doctor_processes(int n, int shift_length, stats_p stat);
 void create_triage_threads(int n);
-void start_shift(int shift_length);
 
 //queue_actions.c
 void print_queue();
 void append(pacient_p pacient);
+
+//stats.c
+void print_stats();
 
 #endif

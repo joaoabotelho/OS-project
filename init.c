@@ -53,7 +53,8 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
     if(!(id = fork())){
       signal(SIGINT, SIG_IGN);
       printf("[%ld] Created\n", (long)getpid());
-      start_shift(shift_length);
+      start_shift();
+      write_to_statistics_p();
       printf("[%ld] Destroyed\n", (long)getpid());
       exit(0);
     }

@@ -1,12 +1,13 @@
 #include "header.h"
 
-void write_to_statistics_p(float new_time){
-  int examined = statistics -> examined;
-  int time_bf_triage = statistics -> time_bf_triage;
+void write_to_statistics_p(){
+  /*int examined = statistics -> examined;*/
+  /*int time_bf_triage = statistics -> time_bf_triage;*/
   sem_wait(&mutex);
-  statistics -> time_bf_triage =
-    (time_bf_triage * examined + new_time) / (examined + 1);
-  (statistics -> examined)++;
+  statistics -> examined++;
+  /*statistics -> time_bf_triage =*/
+    /*(time_bf_triage * examined + new_time) / (examined + 1);*/
+  /*(statistics -> examined)++;*/
   sem_post(&mutex);
 }
 
@@ -19,6 +20,7 @@ void replacing_doctors(int shift_length) {
       signal(SIGINT, SIG_IGN);
       printf("[%ld] Created\n", (long)getpid());
       start_shift(shift_length);
+      write_to_statistics_p();
       printf("[%ld] Destroyed\n", (long)getpid());
       exit(0);
     }
@@ -32,14 +34,14 @@ void temp_doctor(shift_length){
   if(!(id=fork())){
     signal(SIGINT, SIG_IGN);
     printf("[%ld] Created\n", (long)getpid());
-    start_shift(shift_length);
+    start_shift();
     printf("[%ld] Destroyed\n", (long)getpid());
     exit(0);
   }
 }
 
-void start_shift(int shift_length) {
-  sleep(shift_length);
+void start_shift() {
+  sleep(configuration -> shift_length);
   return;
 }
 

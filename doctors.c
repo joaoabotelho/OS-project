@@ -4,9 +4,9 @@ void write_to_statistics_p(){
   /*int examined = statistics -> examined;*/
   /*int time_bf_triage = statistics -> time_bf_triage;*/
   sem_wait(&mutex);
-  statistics -> examined++;
+  statistics -> treated++;
   /*statistics -> time_bf_triage =*/
-    /*(time_bf_triage * examined + new_time) / (examined + 1);*/
+  /*(time_bf_triage * examined + new_time) / (examined + 1);*/
   /*(statistics -> examined)++;*/
   sem_post(&mutex);
 }
@@ -28,16 +28,18 @@ void replacing_doctors(int shift_length) {
   exit(0);
 }
 
-void temp_doctor(shift_length){
+void temp_doctor(int shift_length){
   pid_t id;
 
   if(!(id=fork())){
     signal(SIGINT, SIG_IGN);
     printf("[%ld] Created\n", (long)getpid());
     start_shift();
+    write_to_statistics_p();
     printf("[%ld] Destroyed\n", (long)getpid());
     exit(0);
   }
+  return;
 }
 
 void start_shift() {

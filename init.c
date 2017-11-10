@@ -64,11 +64,13 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
 
 void* worker(void* i) {
   printf("IM WORKING\n");
+  pthread_exit(NULL);
   return NULL;
 }
 
 void create_triage_threads(int n){
   pthread_t threads[n];
+  pid_t proc_id;
   int id[n];
   int i;
 
@@ -80,5 +82,5 @@ void create_triage_threads(int n){
   for(i = 0; i < n; i++){
     pthread_join(threads[i], NULL);
   }
- return;
+  return;
 }

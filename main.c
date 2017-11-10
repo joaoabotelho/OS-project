@@ -14,6 +14,8 @@ int main(){
 
   wait(NULL);
   print_stats();
+  sem_destroy(&mutex);
+  printf("Semaphore destroyed\n");
   shmdt(statistics);
   printf("Memory detatched successfully\n");
   shmctl(shm_id, IPC_RMID, NULL);

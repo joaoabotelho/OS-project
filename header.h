@@ -10,6 +10,8 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define CHAR_SIZE 1024
 #define TRUE 1
@@ -66,6 +68,7 @@ void write_to_statistics_p();
 void replacing_doctors(int shift_length);
 void start_shift();
 void terminate_doctors(int signum);
+void temp_doctor(int shift_length);
 
 //init.c
 config_p load_configuration();

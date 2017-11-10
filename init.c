@@ -2,31 +2,30 @@
 
 config_p load_configuration() {
   FILE *config;
-  char *str;
-  char *token;
+  char *label;
+  int value;
   config_p configuration;
   int line;
 
   configuration= (config_p)malloc(sizeof(Config));
   check_memory_config(configuration);
-  str = (char*)malloc(CHAR_SIZE * sizeof(char));
-  check_memory_char(str);
+  label = (char*)malloc(CHAR_SIZE * sizeof(char));
+  check_memory_char(label);
 
   config = fopen("config.txt", "r");
   for(line = 0; line < 4; line++) {
-    fscanf(config, "%s", str);
-    token = strtok(str, "=");
-    token = strtok(NULL, "=");
-    switch(line) {
-      case 0:
-        configuration->triage = atoi(token);
-      case 1:
-        configuration->doctors = atoi(token);
-      case 2:
-        configuration->shift_length = atoi(token);
-      case 3:
-        configuration->mq_max = atoi(token);
-    }
+    fscanf(config, "%s %d", label, &value);
+    if(!strcmp(label, "TRIAGE"))
+      configuration -> triage = value;
+
+    if(!strcmp(label, "DOCTORS"))
+      configuration -> doctors = value;
+
+    if(!strcmp(label, "SHIFT_LENGTH"))
+      configuration -> shift_length = value;
+
+    if(!strcmp(label, "MQ_MAX"))
+      configuration -> mq_max = value;
   }
   return configuration;
 }

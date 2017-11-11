@@ -13,6 +13,7 @@ int main(){
   create_doctor_processes(configuration -> doctors, configuration -> shift_length, statistics);
 
   wait(NULL);
+  wait(NULL);
   print_stats();
   sem_destroy(&mutex);
   printf("Semaphore destroyed\n");

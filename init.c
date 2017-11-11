@@ -13,6 +13,10 @@ config_p load_configuration() {
   check_memory_char(label);
 
   config = fopen("config.txt", "r");
+  if(!config){
+    printf("file cannot be open.");
+    exit(0);
+  }
   for(line = 0; line < 4; line++) {
     fscanf(config, "%s %d", label, &value);
     if(!strcmp(label, "TRIAGE"))
@@ -73,6 +77,9 @@ void create_triage_threads(int n){
   int id[n];
   int i;
 
+  if((proc_id = fork()))
+    return;
+
   for(i = 0; i < n; i++){
     id[i] = i;
     pthread_create(&threads[i], NULL, worker, &id[i]);
@@ -81,5 +88,6 @@ void create_triage_threads(int n){
   for(i = 0; i < n; i++){
     pthread_join(threads[i], NULL);
   }
+  exit(0);
   return;
 }

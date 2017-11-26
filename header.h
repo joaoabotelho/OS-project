@@ -26,19 +26,19 @@ int np_read_id;
 
 typedef struct config *config_p;
 typedef struct config {
-  int triage;
-  int doctors;
-  int shift_length;
-  int mq_max;
+    int triage;
+    int doctors;
+    int shift_length;
+    int mq_max;
 } Config;
 
 typedef struct stats *stats_p;
 typedef struct stats {
-  int examined;
-  int treated;
-  float time_bf_triage;
-  float time_betw_triage_attend;
-  float total_time;
+    int examined;
+    int treated;
+    float time_bf_triage;
+    float time_betw_triage_attend;
+    float total_time;
 } Stats;
 
 typedef struct pacient *pacient_p;
@@ -53,8 +53,8 @@ typedef struct pacient{
 
 typedef struct pacients_list *pacients_list_p;
 typedef struct pacients_list {
-  pacient_p pacient;
-  pacients_list_p next;
+    pacient_p pacient;
+    pacients_list_p next;
 } Pacients_list;
 
 sem_t mutex;
@@ -64,8 +64,10 @@ pacients_list_p queue_head;
 pacients_list_p queue_tail;
 
 stats_p statistics;
-
 config_p configuration;
+
+int msgq_id;
+int input_pipe_id;
 
 //checkers.c
 void check_memory_char(char *s);

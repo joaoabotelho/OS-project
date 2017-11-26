@@ -8,6 +8,7 @@ int main(){
     signal(SIGINT, SIG_IGN);
     sem_init(&mutex, 1, 1);
     assert((msgq_id = msgget(IPC_PRIVATE, IPC_CREAT|0700)) != 0);
+    name_pipe_server();
     configuration = load_configuration();
     statistics = create_shared_memory();
     create_triage_threads(configuration -> triage);

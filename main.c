@@ -9,6 +9,10 @@ int main(){
   sem_init(&mutex, 1, 1);
   configuration = load_configuration();
   statistics = create_shared_memory();
+  // named pipe
+
+  name_pipe_server();
+
   create_triage_threads(configuration -> triage);
   create_doctor_processes(configuration -> doctors, configuration -> shift_length, statistics);
 

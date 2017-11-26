@@ -1,21 +1,28 @@
 #ifndef __header__h_
 #define __header__h_
 
+
+#include <errno.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
-#include <signal.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #define CHAR_SIZE 1024
-#define TRUE 1
 #define FALSE 0
+#define MAX_BUFFER_SIZE 256
+#define PIPE_NAME "np_client_server"
+#define TRUE 1
+
+int np_read_id;
 
 typedef struct config *config_p;
 typedef struct config {
@@ -36,7 +43,9 @@ typedef struct stats {
 
 typedef struct pacient *pacient_p;
 typedef struct pacient{
-  char *name;
+  long mtype;
+  char name[MAX_BUFFER_SIZE];
+  int id;
   int triage_time;
   int doctor_time;
   int priority;
@@ -83,4 +92,6 @@ void append(pacient_p pacient);
 //stats.c
 void print_stats();
 
+//np_server.c
+void name_pipe_server();
 #endif

@@ -2,6 +2,7 @@
 #define __header__h_
 
 
+#include <assert.h>
 #include <errno.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -10,15 +11,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
+#include <sys/msg.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #define CHAR_SIZE 1024
 #define FALSE 0
-#define MAX_BUFFER_SIZE 256
+#define MAX_BUFFER_SIZE 1024
 #define PIPE_NAME "np_client_server"
 #define TRUE 1
 
@@ -43,12 +46,11 @@ typedef struct stats {
 
 typedef struct pacient *pacient_p;
 typedef struct pacient{
-  long mtype;
-  char name[MAX_BUFFER_SIZE];
-  int id;
-  int triage_time;
-  int doctor_time;
-  int priority;
+    long mtype;
+    char name[MAX_BUFFER_SIZE];
+    int id;
+    int triage_time;
+    int doctor_time;
 } Pacient;
 
 typedef struct pacients_list *pacients_list_p;
@@ -75,6 +77,7 @@ void check_memory_int(int i);
 void check_memory_config(config_p c);
 
 //doctors.c
+void create_doctor_processes(int n, int shift_length, stats_p stat);
 void write_to_statistics_p();
 void replacing_doctors(int shift_length);
 void start_shift();
@@ -84,16 +87,22 @@ void temp_doctor(int shift_length);
 //init.c
 config_p load_configuration();
 stats_p create_shared_memory();
-void create_doctor_processes(int n, int shift_length, stats_p stat);
-void create_triage_threads(int n);
 
 //queue_actions.c
 void print_queue();
 void append(pacient_p pacient);
+pacient_p pop();
+int is_empty();
 
 //stats.c
 void print_stats();
 
-//np_server.c
-void name_pipe_server();
+//named_pipe.c
+void start_named_pipe();
+void read_from_named_pipe();
+
+//triage.c
+void create_triage_threads(int n);
+void* triage_worker(void* i);
+
 #endif

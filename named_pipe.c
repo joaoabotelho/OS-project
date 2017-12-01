@@ -22,11 +22,10 @@ void* read_from_named_pipe(void *i){
         read(np_read_id, pacient, sizeof(Pacient));
         printf("Received: %s %ld %d %d\n", pacient -> name, pacient -> mtype, pacient -> triage_time, pacient -> doctor_time);
         
-        sem_wait(&queue_mutex);
-        printf("ajnfssoa\n");
+        sem_wait(queue_mutex);
         append(pacient); // adds to queue
-        sem_post(&queue_mutex);
-        sem_post(&queue_empty);
+        sem_post(queue_mutex);
+        sem_post(queue_empty);
         print_queue();
     }
 

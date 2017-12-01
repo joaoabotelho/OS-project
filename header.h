@@ -57,7 +57,7 @@ typedef struct pacients_list {
     pacients_list_p next;
 } Pacients_list;
 
-sem_t mutex, queue_mutex, queue_empty;
+sem_t mutex,*mq_triage_mutex, *mq_doc_mutex, *queue_mutex, *queue_empty;
 int shm_id;
 int np_read_id;
 

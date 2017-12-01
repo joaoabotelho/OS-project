@@ -30,20 +30,17 @@ void* triage_worker(void* i){
     int id = *((int *)i) + 1;
 
     while(TRUE){
-        sem_wait(&queue_empty);
-        printf("lala\n");
-        sem_wait(&queue_mutex);
-        printf("Triage %d removing pacient\n", id);
+        sem_wait(queue_empty);
+        sem_wait(queue_mutex);
+        printf("Triage %d examining pacient...\n", id);
         pacient = pop();
-        printf("Triage %d sending to MQ-> %s %d\n", id, pacient -> name, pacient -> triage_time);
-        msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), 0);
-        sem_post(&queue_mutex);
-        printf("Triage %d finished with pacient", id);
-        break;
+        usleep(pacient -> triage_time);
+        sem_wait(mq_triage_mutex);
+        msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), IPC_NOWAIT);
+        sem_post(mq_triage_mutex);
+        printf("Triage %d sent pacient to waiting room\n", id);
+        sem_post(queue_mutex);
+        free(pacient);
     }
-    printf("finished\n");
-    msgrcv(msgq_id, buffer, sizeof(Pacient)-sizeof(long), 1, 0);
-    printf("buffer -> %d\n", buffer -> triage_time);
-    pthread_exit(NULL);
     return NULL;
 }

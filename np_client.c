@@ -1,8 +1,18 @@
 #include "header.h"
 
+int fd;
+
+void cleanup(int signum){
+    close(fd);
+    exit(0);
+}
+
+
 int main(){
-    int fd, i, iter;
-    int pacient_id = 0;
+    int i, iter;
+    int pacient_id = 1;
+
+    signal(SIGINT, cleanup);
 
     if ((fd = open(PIPE_NAME, O_WRONLY)) < 0){
         perror("Cannot open pipe for writing: ");
@@ -13,7 +23,7 @@ int main(){
 
     while(1) {
         pacient_p new_pacient = (pacient_p)malloc(sizeof(Pacient));
-        scanf("%s %d %d %ld\n", new_pacient->name, &new_pacient->triage_time, &new_pacient->doctor_time, &new_pacient->mtype);
+        scanf("%s %d %d %ld", new_pacient->name, &new_pacient->triage_time, &new_pacient->doctor_time, &new_pacient->mtype);
         if(isdigit(new_pacient -> name[0])){
             iter = atoi(new_pacient -> name);
             printf("iter = %d\n", iter);

@@ -1,9 +1,9 @@
 #include "header.h"
 
-void cleanup(){
+void cleanup(int signum){
     close(input_pipe_id);
     unlink(PIPE_NAME);
-    msgctl(msgq_id, IPC_RMID, 0);
+    msgctl(msgq_id, IPC_RMID, NULL);
     exit(0);
 }
 
@@ -14,9 +14,18 @@ int main(){
     pacients_list_p queue_head = NULL;
     pacients_list_p queue_tail = NULL;
 
-    sleep(10);
+    sem_unlink("QUEUE_EMPTY");
+    sem_unlink("QUEUE_MUTEX");
+    sem_unlink("MQ_TRIAG");
+    sem_unlink("MQ_DOC");
+    queue_empty = sem_open("QUEUE_EMPTY", O_CREAT, 0700, 0);
+    queue_mutex = sem_open("QUEUE_MUTEX", O_CREAT, 0700, 1);
+    mq_triage_mutex = sem_open("MQ_TRIAG", O_CREAT, 0700, 1);
+    mq_doc_mutex = sem_open("MQ_DOC", O_CREAT, 0700, 1);
+/*
     sem_init(&queue_empty, 0, 0);
     sem_init(&queue_mutex, 0, 1);
+    */
     
     /*signal(SIGINT, SIG_IGN);*/
     signal(SIGINT, cleanup);
@@ -29,7 +38,7 @@ int main(){
     /*statistics = create_shared_memory();*/
     /*create_doctor_processes(configuration -> doctors, configuration -> shift_length, statistics);*/
 
-    sleep(50);
+    sleep(1000000000);
     /*wait(NULL);*/
     /*wait(NULL);*/
     /*print_stats();*/

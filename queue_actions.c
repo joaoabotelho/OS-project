@@ -29,9 +29,7 @@ void append(pacient_p pacient){
 
 pacient_p pop(){
     pacient_p first;
-    printf("%ld\n", queue_head);
     if(!is_empty()){
-        printf("not empty\n");
         first = queue_head -> pacient;
         queue_head = queue_head -> next;
         return first;

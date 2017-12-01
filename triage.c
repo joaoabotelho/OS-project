@@ -6,18 +6,12 @@ void create_triage_threads(int n){
     int id[n];
     int i;
 
-    /*if((proc_id = fork()))*/
-        /*return;*/
-
     for(i = 0; i < n; i++){
+        printf("Create Triage %d\n", i+1);
         id[i] = i;
         pthread_create(&threads[i], NULL, triage_worker, &id[i]);
     }
 
-    /*for(i = 0; i < n; i++){*/
-    /*pthread_join(threads[i], NULL);*/
-    /*}*/
-    /*exit(0);*/
     return;
 }
 
@@ -33,13 +27,19 @@ void write_to_statistics_t(float new_time){
 void* triage_worker(void* i){
     pacient_p pacient;
     pacient_p buffer = (pacient_p)malloc(sizeof(Pacient));
+    int id = *((int *)i) + 1;
+
     while(TRUE){
-        if((pacient = pop())){
-            printf("ok");
-            printf("sending -> %s %d\n", pacient -> name, pacient -> triage_time);
-            msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), 0);
-            break;
-        }
+        sem_wait(&queue_empty);
+        printf("lala\n");
+        sem_wait(&queue_mutex);
+        printf("Triage %d removing pacient\n", id);
+        pacient = pop();
+        printf("Triage %d sending to MQ-> %s %d\n", id, pacient -> name, pacient -> triage_time);
+        msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), 0);
+        sem_post(&queue_mutex);
+        printf("Triage %d finished with pacient", id);
+        break;
     }
     printf("finished\n");
     msgrcv(msgq_id, buffer, sizeof(Pacient)-sizeof(long), 1, 0);

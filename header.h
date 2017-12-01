@@ -1,7 +1,7 @@
 #ifndef __header__h_
 #define __header__h_
 
-
+#include <fcntl.h>
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
@@ -24,8 +24,6 @@
 #define MAX_BUFFER_SIZE 1024
 #define PIPE_NAME "np_client_server"
 #define TRUE 1
-
-int np_read_id;
 
 typedef struct config *config_p;
 typedef struct config {
@@ -59,8 +57,9 @@ typedef struct pacients_list {
     pacients_list_p next;
 } Pacients_list;
 
-sem_t mutex;
+sem_t mutex, queue_mutex, queue_empty;
 int shm_id;
+int np_read_id;
 
 pacients_list_p queue_head;
 pacients_list_p queue_tail;
@@ -99,7 +98,7 @@ void print_stats();
 
 //named_pipe.c
 void start_named_pipe();
-void read_from_named_pipe();
+void* read_from_named_pipe(void *i);
 
 //triage.c
 void create_triage_threads(int n);

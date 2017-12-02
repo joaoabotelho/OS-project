@@ -1,53 +1,79 @@
 #include "header.h"
 
-void cleanup(int signum){
-    close(input_pipe_id);
-    unlink(PIPE_NAME);
-    msgctl(msgq_id, IPC_RMID, NULL);
-    exit(0);
+void create_semaphores(){
+    sem_unlink("QUEUE_EMPTY");
+    sem_unlink("QUEUE_MUTEX");
+    sem_unlink("MQ_TRIAG");
+    sem_unlink("MQ_DOC");
+    sem_unlink("MQ_EMPTY");
+    sem_unlink("CHECK_MUTEX");
+    sem_unlink("CHECK_MUTEX_DOC");
+    queue_empty = sem_open("QUEUE_EMPTY", O_CREAT, 0700, 0);
+    queue_mutex = sem_open("QUEUE_MUTEX", O_CREAT, 0700, 1);
+    check_mutex = sem_open("CHECK_MUTEX", O_CREAT, 0700, 1);
+    mq_triage_mutex = sem_open("MQ_TRIAG", O_CREAT, 0700, 1);
+    shm_sem_doc -> mq_doc_mutex = sem_open("MQ_DOC", O_CREAT, 0700, 1);
+    shm_sem_doc -> check_mutex = sem_open("CHECK_MUTEX_DOC", O_CREAT, 0700, 1);
+    return;
+}
+
+void semaphores_destroyed(){
+    sem_close(queue_empty);
+    sem_close(queue_mutex);
+    sem_close(check_mutex);
+    sem_close(mq_triage_mutex);
+    sem_close(shm_sem_doc -> mq_doc_mutex);
+    sem_close(shm_sem_doc -> check_mutex);
+    sem_unlink("QUEUE_EMPTY");
+    sem_unlink("QUEUE_MUTEX");
+    sem_unlink("MQ_TRIAG");
+    sem_unlink("MQ_DOC");
+    sem_unlink("MQ_EMPTY");
+    sem_unlink("CHECK_MUTEX");
+    sem_unlink("CHECK_MUTEX_DOC");
+    return;
 }
 
 int main(){
     pthread_t read_npipe_thread;
     int id_read_npipe_thread;
-
+    
     pacients_list_p queue_head = NULL;
     pacients_list_p queue_tail = NULL;
+    create_sem_shm();
+    shm_sem_doc->flag_p = 0;
+    shm_sem_doc->flag_t = 0;
+    create_semaphores();
 
-    sem_unlink("QUEUE_EMPTY");
-    sem_unlink("QUEUE_MUTEX");
-    sem_unlink("MQ_TRIAG");
-    sem_unlink("MQ_DOC");
-    queue_empty = sem_open("QUEUE_EMPTY", O_CREAT, 0700, 0);
-    queue_mutex = sem_open("QUEUE_MUTEX", O_CREAT, 0700, 1);
-    mq_triage_mutex = sem_open("MQ_TRIAG", O_CREAT, 0700, 1);
-    mq_doc_mutex = sem_open("MQ_DOC", O_CREAT, 0700, 1);
-/*
-    sem_init(&queue_empty, 0, 0);
-    sem_init(&queue_mutex, 0, 1);
-    */
-    
-    /*signal(SIGINT, SIG_IGN);*/
-    signal(SIGINT, cleanup);
-    /*sem_init(&mutex, 1, 1);*/
     assert((msgq_id = msgget(IPC_PRIVATE, IPC_CREAT|0700)) != 0);
     configuration = load_configuration();
+    pthread_t triage[configuration -> triage];
     start_named_pipe();
-    create_triage_threads(configuration -> triage);
+    create_triage_threads(triage, configuration -> triage);
     pthread_create(&read_npipe_thread, NULL, read_from_named_pipe, &id_read_npipe_thread); //thread to read named pipe
     /*statistics = create_shared_memory();*/
-    /*create_doctor_processes(configuration -> doctors, configuration -> shift_length, statistics);*/
+    create_doctor_processes(configuration -> doctors, configuration -> shift, statistics);
 
-    sleep(1000000000);
-    /*wait(NULL);*/
-    /*wait(NULL);*/
+    pthread_join(read_npipe_thread, NULL);
+    printf("Named pipe closed\n");
+    shm_sem_doc->flag_t = 1;
+    for(int i=0; i < configuration->triage; i++){
+        pthread_join(triage[i], NULL);
+    }
+    printf("Triages done and closed\n");
+    wait(NULL);
+    printf("All done\n");
     /*print_stats();*/
-    /*sem_destroy(&mutex);*/
+    semaphores_destroyed();
     printf("Semaphore destroyed\n");
+    msgctl(msgq_id, IPC_RMID, NULL);
+    printf("MQ removed\n");
+    /*
     shmdt(statistics);
     printf("Memory detatched successfully\n");
     shmctl(shm_id, IPC_RMID, NULL);
     printf("Shared Memory destoyed successfully");
+    */
 
     return 0;
 }

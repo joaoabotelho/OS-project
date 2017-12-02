@@ -14,8 +14,17 @@ void start_named_pipe(){
     }
 }
 
+void exit_np_thread(int signum){
+    pthread_exit(NULL);
+    close(input_pipe_id);
+    unlink(PIPE_NAME);
+    return;
+}
+
 void* read_from_named_pipe(void *i){
     pacient_p pacient;
+    
+    signal(SIGINT, exit_np_thread);
 
     while(TRUE){
         pacient = (pacient_p)malloc(sizeof(Pacient));

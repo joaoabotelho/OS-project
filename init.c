@@ -26,12 +26,21 @@ config_p load_configuration() {
             configuration -> doctors = value;
 
         if(!strcmp(label, "SHIFT_LENGTH"))
-            configuration -> shift_length = value;
+            configuration -> shift = value;
 
         if(!strcmp(label, "MQ_MAX"))
             configuration -> mq_max = value;
     }
     return configuration;
+}
+
+void create_sem_shm() {
+    sem_shm = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
+    if(sem_shm == -1){
+        perror("Error: ");
+    }
+    shm_sem_doc = shmat(sem_shm, NULL, 0);
+    return;
 }
 
 stats_p create_shared_memory() {

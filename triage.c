@@ -1,7 +1,6 @@
 #include "header.h"
 
-void create_triage_threads(int n){
-    pthread_t threads[n];
+void create_triage_threads(pthread_t threads[], int n){
     pid_t proc_id;
     int id[n];
     int i;
@@ -24,13 +23,45 @@ void write_to_statistics_t(float new_time){
     sem_post(&mutex);
 }
 
+void threads_exit(int signum){
+    pacient_p pacient;
+    //check if queue is empty
+    while(TRUE){
+        sem_wait(check_mutex);
+        if(!is_empty()){
+            // finish queue
+            printf("Triage examining pacient...\n");
+            pacient = pop();
+            sem_post(check_mutex);
+            usleep(pacient -> triage_time);
+            sem_wait(mq_triage_mutex);
+            msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), IPC_NOWAIT);
+            sem_post(mq_triage_mutex);
+            printf("Triage sent pacient to waiting room\n");
+            free(pacient);
+        } else {
+            sem_post(check_mutex);
+            break;
+        } 
+    }
+    // flag_processes turns on 
+    printf("lalalla1 %ld\n", (long)doctors_parent);
+    kill(doctors_parent, SIGUSR1);
+    printf("lalalla2 %ld\n", (long)doctors_parent);
+    shm_sem_doc->flag_p = 1;
+    // close threads
+    pthread_exit(NULL);
+    return;
+}
+
 void* triage_worker(void* i){
     pacient_p pacient;
-    pacient_p buffer = (pacient_p)malloc(sizeof(Pacient));
     int id = *((int *)i) + 1;
 
     while(TRUE){
+        signal(SIGINT, threads_exit);
         sem_wait(queue_empty);
+        signal(SIGINT, SIG_IGN);
         sem_wait(queue_mutex);
         printf("Triage %d examining pacient...\n", id);
         pacient = pop();
@@ -41,6 +72,9 @@ void* triage_worker(void* i){
         printf("Triage %d sent pacient to waiting room\n", id);
         sem_post(queue_mutex);
         free(pacient);
+        
+        if(shm_sem_doc->flag_t == 1)
+            threads_exit(0);
     }
     return NULL;
 }

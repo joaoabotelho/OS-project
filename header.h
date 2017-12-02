@@ -24,12 +24,13 @@
 #define MAX_BUFFER_SIZE 1024
 #define PIPE_NAME "np_client_server"
 #define TRUE 1
+#define MAX_PRIORITY 10
 
 typedef struct config *config_p;
 typedef struct config {
     int triage;
     int doctors;
-    int shift_length;
+    int shift;
     int mq_max;
 } Config;
 
@@ -57,8 +58,17 @@ typedef struct pacients_list {
     pacients_list_p next;
 } Pacients_list;
 
-sem_t mutex,*mq_triage_mutex, *mq_doc_mutex, *queue_mutex, *queue_empty;
+typedef struct sems *sems_p;
+typedef struct sems {
+  sem_t *mq_doc_mutex, *check_mutex;
+  int flag_t, flag_p;
+} Sems;
+
+sems_p shm_sem_doc;
+sem_t mutex,*mq_triage_mutex, *queue_mutex, *queue_empty, *check_mutex;
+pid_t doctors_parent;
 int shm_id;
+int sem_shm;
 int np_read_id;
 
 pacients_list_p queue_head;
@@ -80,12 +90,14 @@ void create_doctor_processes(int n, int shift_length, stats_p stat);
 void write_to_statistics_p();
 void replacing_doctors(int shift_length);
 void start_shift();
-void terminate_doctors(int signum);
+void terminate_doctors();
 void temp_doctor(int shift_length);
+void processes_exit(int signum);
 
 //init.c
 config_p load_configuration();
 stats_p create_shared_memory();
+void create_sem_shm();
 
 //queue_actions.c
 void print_queue();
@@ -101,7 +113,7 @@ void start_named_pipe();
 void* read_from_named_pipe(void *i);
 
 //triage.c
-void create_triage_threads(int n);
+void create_triage_threads(pthread_t threads[], int n);
 void* triage_worker(void* i);
 
 #endif

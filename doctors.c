@@ -5,6 +5,7 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
     pid_t id;
 
     signal(SIGUSR1, processes_exit);
+
     if((doctors_parent = fork())){
         printf("Luke i am your father %ld and this is mine %ld\n", (long) getpid(), (long)getppid());
         return;
@@ -41,6 +42,7 @@ void replacing_doctors(int shift_length) {
     }
   }
   exit(0);
+  return;
 }
 
 void temp_doctor(int shift_length){
@@ -68,34 +70,35 @@ void processes_exit(int signum){
     int i;
 
     if(getpid() == doctors_parent){
+        printf("DOCTORS PARENT");
         terminate_doctors();
     }
     printf("RECEIVED SIGUSR1 [%ld]\n", (long)getpid());
-    int rc;
-    struct msqid_ds buf;
-    int num_messages;
-    pacient_p buffer;
-    signal(SIGALRM, SIG_IGN);
+    /*int rc;*/
+    /*struct msqid_ds buf;*/
+    /*int num_messages;*/
+    /*pacient_p buffer;*/
+    /*signal(SIGALRM, SIG_IGN);*/
 
-    // semaforo para passar so 1 processo checkar de cada vez se a queue esta vazia 
-    while(TRUE){
-        //limpar a queue
-        sem_wait(shm_sem_doc->check_mutex);
-        rc = msgctl(msgq_id, IPC_STAT, &buf);
-        num_messages = buf.msg_qnum;
-        if(num_messages != 0){
-            buffer = (pacient_p)malloc(sizeof(Pacient));
-            msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
-            sem_post(shm_sem_doc->check_mutex);
-            printf("Doctor %ld attending pacient: %s with priority %ld...\n", (long)getpid(), buffer -> name, buffer->mtype);
-            sleep(buffer -> doctor_time);
-            printf("Doctor %ld finished pacient\n", (long)getpid());
-            //write statistics
-        } else {
-            sem_post(shm_sem_doc->check_mutex);
-            break;
-        }
-    }
+    /*// semaforo para passar so 1 processo checkar de cada vez se a queue esta vazia*/
+    /*while(TRUE){*/
+        /*//limpar a queue*/
+        /*sem_wait(shm_sem_doc->check_mutex);*/
+        /*rc = msgctl(msgq_id, IPC_STAT, &buf);*/
+        /*num_messages = buf.msg_qnum;*/
+        /*if(num_messages != 0){*/
+            /*buffer = (pacient_p)malloc(sizeof(Pacient));*/
+            /*msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);*/
+            /*sem_post(shm_sem_doc->check_mutex);*/
+            /*printf("Doctor %ld attending pacient: %s with priority %ld...\n", (long)getpid(), buffer -> name, buffer->mtype);*/
+            /*sleep(buffer -> doctor_time);*/
+            /*printf("Doctor %ld finished pacient\n", (long)getpid());*/
+            /*//write statistics*/
+        /*} else {*/
+            /*sem_post(shm_sem_doc->check_mutex);*/
+            /*break;*/
+        /*}*/
+    /*}*/
     // acabam os doctores
     exit(0);
     return;
@@ -120,11 +123,11 @@ void start_shift() {
         sleep(buffer -> doctor_time);
         printf("Doctor %ld finished pacient\n", (long)getpid());
         //write statistics
-        
+
         if(shm_sem_doc->flag_p == 1)
             processes_exit(0);
         signal(SIGALRM, exit_doc);
-    } 
+    }
 
     return;
 }

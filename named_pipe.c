@@ -15,6 +15,7 @@ void start_named_pipe(){
 }
 
 void exit_np_thread(int signum){
+    printf("kjdfskdsahfkjadshf\n");
     pthread_exit(NULL);
     close(input_pipe_id);
     unlink(PIPE_NAME);
@@ -23,14 +24,14 @@ void exit_np_thread(int signum){
 
 void* read_from_named_pipe(void *i){
     pacient_p pacient;
-    
+
     signal(SIGINT, exit_np_thread);
 
     while(TRUE){
         pacient = (pacient_p)malloc(sizeof(Pacient));
         read(np_read_id, pacient, sizeof(Pacient));
         printf("Received: %s %ld %d %d\n", pacient -> name, pacient -> mtype, pacient -> triage_time, pacient -> doctor_time);
-        
+
         sem_wait(queue_mutex);
         append(pacient); // adds to queue
         sem_post(queue_mutex);

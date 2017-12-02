@@ -42,14 +42,12 @@ void threads_exit(int signum){
         } else {
             sem_post(check_mutex);
             break;
-        } 
+        }
     }
-    // flag_processes turns on 
-    printf("lalalla1 %ld\n", (long)doctors_parent);
-    kill(doctors_parent, SIGUSR1);
-    printf("lalalla2 %ld\n", (long)doctors_parent);
+    // flag_processes turns on
     shm_sem_doc->flag_p = 1;
     // close threads
+    printf("threads finished\n");
     pthread_exit(NULL);
     return;
 }
@@ -59,20 +57,22 @@ void* triage_worker(void* i){
     int id = *((int *)i) + 1;
 
     while(TRUE){
-        signal(SIGINT, threads_exit);
         sem_wait(queue_empty);
-        signal(SIGINT, SIG_IGN);
+        if(shm_sem_doc -> flag_t == 1){
+            printf("threads finished\n");
+            pthread_exit(NULL);
+        }
         sem_wait(queue_mutex);
         printf("Triage %d examining pacient...\n", id);
         pacient = pop();
-        usleep(pacient -> triage_time);
+        sleep(pacient -> triage_time);
         sem_wait(mq_triage_mutex);
         msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), IPC_NOWAIT);
         sem_post(mq_triage_mutex);
         printf("Triage %d sent pacient to waiting room\n", id);
         sem_post(queue_mutex);
         free(pacient);
-        
+
         if(shm_sem_doc->flag_t == 1)
             threads_exit(0);
     }

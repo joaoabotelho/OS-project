@@ -55,14 +55,14 @@ int main(){
     shm_sem_doc->flag_t = 0;
     create_semaphores();
 
-    /*assert((msgq_id = msgget(IPC_PRIVATE, IPC_CREAT|0700)) != 0);*/
+    assert((msgq_id = msgget(IPC_PRIVATE, IPC_CREAT|0700)) != 0);
     configuration = load_configuration();
     pthread_t triage[configuration -> triage];
     start_named_pipe();
     pthread_create(&read_npipe_thread, NULL, read_from_named_pipe, &id_read_npipe_thread); //thread to read named pipe
     create_triage_threads(triage, configuration -> triage);
     /*statistics = create_shared_memory();*/
-    /*create_doctor_processes(configuration -> doctors, configuration -> shift, statistics);*/
+    create_doctor_processes(configuration -> doctors, configuration -> shift, statistics);
 
     printf("waiting for cleaning\n");
     signal(SIGINT, cleanup);

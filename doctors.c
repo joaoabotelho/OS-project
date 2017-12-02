@@ -73,33 +73,34 @@ void processes_exit(int signum){
         printf("DOCTORS PARENT");
         terminate_doctors();
     }
-    printf("RECEIVED SIGUSR1 [%ld]\n", (long)getpid());
-    /*int rc;*/
-    /*struct msqid_ds buf;*/
-    /*int num_messages;*/
-    /*pacient_p buffer;*/
-    /*signal(SIGALRM, SIG_IGN);*/
+    /*printf("RECEIVED SIGUSR1 [%ld]\n", (long)getpid());*/
+    int rc;
+    struct msqid_ds buf;
+    int num_messages;
+    pacient_p buffer;
+    signal(SIGALRM, SIG_IGN);
 
-    /*// semaforo para passar so 1 processo checkar de cada vez se a queue esta vazia*/
-    /*while(TRUE){*/
-        /*//limpar a queue*/
-        /*sem_wait(shm_sem_doc->check_mutex);*/
-        /*rc = msgctl(msgq_id, IPC_STAT, &buf);*/
-        /*num_messages = buf.msg_qnum;*/
-        /*if(num_messages != 0){*/
-            /*buffer = (pacient_p)malloc(sizeof(Pacient));*/
-            /*msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);*/
-            /*sem_post(shm_sem_doc->check_mutex);*/
-            /*printf("Doctor %ld attending pacient: %s with priority %ld...\n", (long)getpid(), buffer -> name, buffer->mtype);*/
-            /*sleep(buffer -> doctor_time);*/
-            /*printf("Doctor %ld finished pacient\n", (long)getpid());*/
-            /*//write statistics*/
-        /*} else {*/
-            /*sem_post(shm_sem_doc->check_mutex);*/
-            /*break;*/
-        /*}*/
-    /*}*/
+    // semaforo para passar so 1 processo checkar de cada vez se a queue esta vazia
+    while(TRUE){
+        //limpar a queue
+        sem_wait(shm_sem_doc->check_mutex);
+        rc = msgctl(msgq_id, IPC_STAT, &buf);
+        num_messages = buf.msg_qnum;
+        if(num_messages != 0){
+            buffer = (pacient_p)malloc(sizeof(Pacient));
+            msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
+            sem_post(shm_sem_doc->check_mutex);
+            printf("Doctor %ld attending pacient: %s with priority %ld...\n", (long)getpid(), buffer -> name, buffer->mtype);
+            sleep(buffer -> doctor_time);
+            printf("Doctor %ld finished pacient\n", (long)getpid());
+            //write statistics
+        } else {
+            sem_post(shm_sem_doc->check_mutex);
+            break;
+        }
+    }
     // acabam os doctores
+    printf("[%ld] DESTROYED\n", (long)getpid());
     exit(0);
     return;
 }

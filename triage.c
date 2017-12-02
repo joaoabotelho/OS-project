@@ -33,7 +33,7 @@ void threads_exit(int signum){
             printf("Triage examining pacient...\n");
             pacient = pop();
             sem_post(check_mutex);
-            usleep(pacient -> triage_time);
+            sleep(pacient -> triage_time);
             sem_wait(mq_triage_mutex);
             msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), IPC_NOWAIT);
             sem_post(mq_triage_mutex);
@@ -54,21 +54,24 @@ void threads_exit(int signum){
 
 void* triage_worker(void* i){
     pacient_p pacient;
-    int id = *((int *)i) + 1;
+    int id = *((int *)i);
 
     while(TRUE){
         sem_wait(queue_empty);
         if(shm_sem_doc -> flag_t == 1){
             printf("threads finished\n");
+            kill(doctors_parent, SIGUSR1);
             pthread_exit(NULL);
         }
         sem_wait(queue_mutex);
         printf("Triage %d examining pacient...\n", id);
         pacient = pop();
+        sem_post(queue_mutex);
         sleep(pacient -> triage_time);
         sem_wait(mq_triage_mutex);
         msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), IPC_NOWAIT);
         sem_post(mq_triage_mutex);
+        sem_wait(queue_mutex);
         printf("Triage %d sent pacient to waiting room\n", id);
         sem_post(queue_mutex);
         free(pacient);

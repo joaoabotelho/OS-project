@@ -26,10 +26,8 @@ int main(){
         scanf("%s %d %d %ld", new_pacient->name, &new_pacient->triage_time, &new_pacient->doctor_time, &new_pacient->mtype);
         if(isdigit(new_pacient -> name[0])){
             iter = atoi(new_pacient -> name);
-            printf("iter = %d\n", iter);
             strcpy(new_pacient -> name, "");
             for(i = 0; i < iter; i++){
-                printf("okok\n");
                 new_pacient -> id = pacient_id++;
                 write(fd, new_pacient, sizeof(Pacient));
             }

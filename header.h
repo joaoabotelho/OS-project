@@ -60,10 +60,11 @@ typedef struct pacients_list {
 
 typedef struct sems *sems_p;
 typedef struct sems {
-  sem_t *mq_doc_mutex, *check_mutex;
-  int flag_t, flag_p;
+    sem_t *mq_doc_mutex, *check_mutex;
+    int flag_t, flag_p;
 } Sems;
 
+pthread_t read_npipe_thread;
 sems_p shm_sem_doc;
 sem_t mutex,*mq_triage_mutex, *queue_mutex, *queue_empty, *check_mutex;
 pid_t doctors_parent;

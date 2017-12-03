@@ -63,7 +63,6 @@ int main(){
     create_triage_threads(triage, configuration -> triage);
     /*statistics = create_shared_memory();*/
     create_doctor_processes(configuration -> doctors, configuration -> shift, statistics);
-
     printf("waiting for cleaning\n");
     signal(SIGINT, cleanup);
     sleep(100000);

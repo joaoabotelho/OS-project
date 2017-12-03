@@ -30,13 +30,11 @@ void* read_from_named_pipe(void *i){
     while(TRUE){
         pacient = (pacient_p)malloc(sizeof(Pacient));
         read(np_read_id, pacient, sizeof(Pacient));
-        printf("Received: %s %ld %d %d\n", pacient -> name, pacient -> mtype, pacient -> triage_time, pacient -> doctor_time);
-
+        printf("Received: %d\n", pacient->id);
         sem_wait(queue_mutex);
         append(pacient); // adds to queue
         sem_post(queue_mutex);
         sem_post(queue_empty);
-        print_queue();
     }
 
     return NULL;

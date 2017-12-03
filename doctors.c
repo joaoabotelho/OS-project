@@ -3,11 +3,11 @@
 void create_doctor_processes(int n, int shift_length, stats_p stat) {
     int i;
     pid_t id;
+    shm_sem_doc -> mq_read = 0;
 
     signal(SIGUSR1, processes_exit);
 
     if((doctors_parent = fork())){
-        printf("Luke i am your father %ld and this is mine %ld\n", (long) getpid(), (long)getppid());
         return;
     }
 
@@ -57,11 +57,13 @@ void temp_doctor(int shift_length){
 
 void exit_doc(int signum){
     printf("[%ld] Destroyed\n", (long)getpid());
+    //printf("MQ READ-> %d\n",shm_sem_doc->mq_read);
     exit(0);
 }
 
 void exit_doc_post(int signum){
     printf("[%ld] Destroyed\n", (long)getpid());
+    //printf("MQ READ-> %d\n", shm_sem_doc->mq_read);
     sem_post(shm_sem_doc->mq_doc_mutex);
     exit(0);
 }
@@ -89,6 +91,7 @@ void processes_exit(int signum){
         if(num_messages != 0){
             buffer = (pacient_p)malloc(sizeof(Pacient));
             msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
+            shm_sem_doc -> mq_read++;
             sem_post(shm_sem_doc->check_mutex);
             printf("Doctor %ld attending pacient: %s with priority %ld...\n", (long)getpid(), buffer -> name, buffer->mtype);
             sleep(buffer -> doctor_time);
@@ -101,6 +104,7 @@ void processes_exit(int signum){
     }
     // acabam os doctores
     printf("[%ld] DESTROYED\n", (long)getpid());
+    //printf("MQ READ-> %d\n", shm_sem_doc->mq_read);
     exit(0);
     return;
 }
@@ -113,16 +117,19 @@ void start_shift() {
     alarm(configuration -> shift);
 
     while(TRUE){
-//        signal(SIGUSR1, processes_exit);
+        signal(SIGUSR1, processes_exit);
         sem_wait(shm_sem_doc->mq_doc_mutex);
         signal(SIGALRM, exit_doc_post);
         msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
+        shm_sem_doc -> mq_read++;
         signal(SIGUSR1, SIG_IGN);
         signal(SIGALRM, SIG_IGN);
         sem_post(shm_sem_doc->mq_doc_mutex);
-        printf("Doctor %ld attending pacient: %s with priority %ld...\n", (long)getpid(), buffer -> name, buffer->mtype);
+        printf("[%ld] RECEBI (%d)\n", (long)getpid(), buffer->id);
+        //printf("Doctor %ld attending pacient: (%d) with priority %ld...\n", (long)getpid(), buffer -> id, buffer->mtype);
         sleep(buffer -> doctor_time);
-        printf("Doctor %ld finished pacient\n", (long)getpid());
+        //printf("Doctor %ld finished pacient\n", (long)getpid());
+        printf("[%ld] ACABEI (%d)\n", (long)getpid(), buffer->id);
         //write statistics
 
         if(shm_sem_doc->flag_p == 1)

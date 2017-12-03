@@ -61,7 +61,7 @@ typedef struct pacients_list {
 typedef struct sems *sems_p;
 typedef struct sems {
     sem_t *mq_doc_mutex, *check_mutex;
-    int flag_t, flag_p;
+    int mq_read, flag_t, flag_p;
 } Sems;
 
 pthread_t read_npipe_thread;

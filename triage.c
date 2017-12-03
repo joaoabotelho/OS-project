@@ -1,9 +1,11 @@
 #include "header.h"
 
+int numb_sent;
 void create_triage_threads(pthread_t threads[], int n){
     pid_t proc_id;
     int id[n];
     int i;
+    numb_sent = 0;
 
     for(i = 0; i < n; i++){
         printf("Create Triage %d\n", i+1);
@@ -36,6 +38,7 @@ void threads_exit(int signum){
             sleep(pacient -> triage_time);
             sem_wait(mq_triage_mutex);
             msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), IPC_NOWAIT);
+            numb_sent++;
             sem_post(mq_triage_mutex);
             printf("Triage sent pacient to waiting room\n");
             free(pacient);
@@ -48,13 +51,15 @@ void threads_exit(int signum){
     shm_sem_doc->flag_p = 1;
     // close threads
     printf("threads finished\n");
+
     pthread_exit(NULL);
     return;
 }
 
 void* triage_worker(void* i){
     pacient_p pacient;
-    int id = *((int *)i);
+    int id = *((int *)i) + 1;
+    printf("TRIAGE %d WORKING\n", id);
 
     while(TRUE){
         sem_wait(queue_empty);
@@ -64,16 +69,17 @@ void* triage_worker(void* i){
             pthread_exit(NULL);
         }
         sem_wait(queue_mutex);
-        printf("Triage %d examining pacient...\n", id);
+        //printf("Triage %d examining pacient...\n", id);
         pacient = pop();
+        sleep(2);
         sem_post(queue_mutex);
-        sleep(pacient -> triage_time);
+        usleep(pacient -> triage_time);
         sem_wait(mq_triage_mutex);
         msgsnd(msgq_id, pacient, sizeof(Pacient) - sizeof(long), IPC_NOWAIT);
+        numb_sent++;
+        printf("[%d t] Sent (%d) (total: %d\n", id, pacient->id, numb_sent);
         sem_post(mq_triage_mutex);
-        sem_wait(queue_mutex);
-        printf("Triage %d sent pacient to waiting room\n", id);
-        sem_post(queue_mutex);
+        //printf("Triage %d sent pacient (%d) to waiting room\n", id, pacient->id);
         free(pacient);
 
         if(shm_sem_doc->flag_t == 1)

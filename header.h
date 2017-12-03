@@ -66,7 +66,7 @@ typedef struct sems {
 
 pthread_t read_npipe_thread;
 sems_p shm_sem_doc;
-sem_t mutex,*mq_triage_mutex, *queue_mutex, *queue_empty, *check_mutex;
+sem_t mutex,*mq_triage_mutex, *pop_mutex, *queue_mutex, *queue_empty, *check_mutex;
 pid_t doctors_parent;
 int shm_id;
 int sem_shm;
@@ -77,6 +77,7 @@ pacients_list_p queue_tail;
 
 stats_p statistics;
 config_p configuration;
+pthread_t *triage;
 
 int msgq_id;
 int input_pipe_id;

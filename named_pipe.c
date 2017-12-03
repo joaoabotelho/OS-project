@@ -15,10 +15,9 @@ void start_named_pipe(){
 }
 
 void exit_np_thread(int signum){
-    printf("kjdfskdsahfkjadshf\n");
-    pthread_exit(NULL);
     close(input_pipe_id);
     unlink(PIPE_NAME);
+    pthread_exit(NULL);
     return;
 }
 

@@ -8,12 +8,13 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
     signal(SIGUSR1, processes_exit);
 
     if((doctors_parent = fork())){
+        printf("PAI----->%ld\n", (long)doctors_parent);
         return;
     }
 
     for(i = 0; i < n; i++) {
         if(!(id = fork())){
-            printf("[%ld] Created\n", (long)getpid());
+            printf("[%ld] Created e meu pai e %ld\n", (long)getpid(), (long)getppid());
             start_shift();
         }
     }
@@ -35,11 +36,11 @@ void replacing_doctors(int shift_length) {
   pid_t id;
 
   while(TRUE){
-    wait(NULL);
-    if(!(id = fork())){
-      printf("[%ld] Created\n", (long)getpid());
-      start_shift();
-    }
+      wait(NULL);
+      if(!(id = fork())){
+          printf("[%ld] Created e o meu pai e %ld\n", (long)getpid(), (long)getppid());
+          start_shift();
+      }
   }
   exit(0);
   return;
@@ -93,9 +94,9 @@ void processes_exit(int signum){
             msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
             shm_sem_doc -> mq_read++;
             sem_post(shm_sem_doc->check_mutex);
-            printf("Doctor %ld attending pacient: %s with priority %ld...\n", (long)getpid(), buffer -> name, buffer->mtype);
-            sleep(buffer -> doctor_time);
-            printf("Doctor %ld finished pacient\n", (long)getpid());
+            printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer -> id, buffer->mtype);
+            usleep(buffer -> doctor_time);
+            printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer -> id);
             //write statistics
         } else {
             sem_post(shm_sem_doc->check_mutex);
@@ -111,6 +112,7 @@ void processes_exit(int signum){
 
 void start_shift() {
     pacient_p buffer = (pacient_p)malloc(sizeof(Pacient));
+    int a;
 
     signal(SIGINT, SIG_IGN);
     signal(SIGALRM, exit_doc);
@@ -121,20 +123,22 @@ void start_shift() {
         sem_wait(shm_sem_doc->mq_doc_mutex);
         signal(SIGALRM, exit_doc_post);
         msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
-        shm_sem_doc -> mq_read++;
         signal(SIGUSR1, SIG_IGN);
         signal(SIGALRM, SIG_IGN);
+        shm_sem_doc -> mq_read++;
         sem_post(shm_sem_doc->mq_doc_mutex);
-        printf("[%ld] RECEBI (%d)\n", (long)getpid(), buffer->id);
-        //printf("Doctor %ld attending pacient: (%d) with priority %ld...\n", (long)getpid(), buffer -> id, buffer->mtype);
-        sleep(buffer -> doctor_time);
-        //printf("Doctor %ld finished pacient\n", (long)getpid());
-        printf("[%ld] ACABEI (%d)\n", (long)getpid(), buffer->id);
+        printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer -> id, buffer->mtype);
+        usleep(buffer -> doctor_time);
+        printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer -> id);
         //write statistics
 
         if(shm_sem_doc->flag_p == 1)
             processes_exit(0);
+        
+        if(!(a = alarm(1)))
+            exit_doc(0);
         signal(SIGALRM, exit_doc);
+        alarm(a);
     }
 
     return;
@@ -143,6 +147,8 @@ void start_shift() {
 void terminate_doctors(){
   int i;
 
+    if(getpid() == doctors_parent)
+        printf("ESTOU AQUI!!\n");
   for(i = 0; i < configuration -> doctors; i++){
     printf("FINISHED\n");
     wait(NULL);

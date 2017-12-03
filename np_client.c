@@ -29,6 +29,7 @@ int main(){
             strcpy(new_pacient -> name, "");
             for(i = 0; i < iter; i++){
                 new_pacient -> id = pacient_id++;
+                printf("########### %d #############\n", new_pacient->id);
                 write(fd, new_pacient, sizeof(Pacient));
             }
             continue;

@@ -25,6 +25,7 @@
 #define PIPE_NAME "np_client_server"
 #define TRUE 1
 #define MAX_PRIORITY 10
+#define BILLION 1E9
 
 typedef struct config *config_p;
 typedef struct config {
@@ -38,9 +39,9 @@ typedef struct stats *stats_p;
 typedef struct stats {
     int examined;
     int treated;
-    float time_bf_triage;
-    float time_betw_triage_attend;
-    float total_time;
+    double time_bf_triage;
+    double time_betw_triage_attend;
+    double total_time;
 } Stats;
 
 typedef struct pacient *pacient_p;
@@ -50,6 +51,8 @@ typedef struct pacient{
     int id;
     int triage_time;
     int doctor_time;
+    struct timespec start_queue, finish_queue, start_mq, finish_mq;
+    double time_queue, total;
 } Pacient;
 
 typedef struct pacients_list *pacients_list_p;
@@ -60,17 +63,19 @@ typedef struct pacients_list {
 
 typedef struct sems *sems_p;
 typedef struct sems {
-    sem_t *mq_doc_mutex, *check_mutex;
-    int mq_read, flag_t, flag_p;
+    sem_t *stat_mutex, *mq_doc_mutex, *check_mutex;
+    int flag_t, flag_p;
 } Sems;
 
 pthread_t read_npipe_thread;
 sems_p shm_sem_doc;
-sem_t mutex,*mq_triage_mutex, *pop_mutex, *queue_mutex, *queue_empty, *check_mutex;
+sem_t *mq_triage_mutex, *pop_mutex, *queue_mutex, *queue_empty, *check_mutex;
 pid_t doctors_parent;
 int shm_id;
 int sem_shm;
 int np_read_id;
+int *threads_id;
+struct timespec start_main;
 
 pacients_list_p queue_head;
 pacients_list_p queue_tail;

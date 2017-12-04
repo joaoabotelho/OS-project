@@ -1,12 +1,15 @@
 #include "header.h"
 
 void create_triage_threads(){
+    pid_t proc_id;
+    int id[configuration->triage];
     int i;
+    numb_sent = 0;
 
     for(i = 0; i < configuration->triage; i++){
         printf("Create Triage %d\n", i+1);
-        threads_id[i] = i;
-        pthread_create(&triage[i], NULL, triage_worker, &threads_id[i]);
+        id[i] = i;
+        pthread_create(&triage[i], NULL, triage_worker, &id[i]);
     }
 
     return;

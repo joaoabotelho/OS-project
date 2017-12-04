@@ -3,7 +3,6 @@
 void create_doctor_processes(int n, int shift_length, stats_p stat) {
     int i;
     pid_t id;
-    shm_sem_doc -> mq_read = 0;
 
     signal(SIGUSR1, processes_exit);
 
@@ -21,15 +20,25 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
     replacing_doctors(shift_length);
 }
 
-void write_to_statistics_p(){
-  /*int examined = statistics -> examined;*/
-  /*int time_bf_triage = statistics -> time_bf_triage;*/
-  sem_wait(&mutex);
-  statistics -> treated++;
-  /*statistics -> time_bf_triage =*/
-  /*(time_bf_triage * examined + new_time) / (examined + 1);*/
-  /*(statistics -> examined)++;*/
-  sem_post(&mutex);
+void w_stats_d(pacient_p pacient){
+    struct timespec start, finish;
+    double time_mq, total, dum1, dum2;
+    start = pacient->start_mq;
+    finish = pacient->finish_mq;
+
+    time_mq = finish.tv_sec - start.tv_sec;
+    time_mq += (finish.tv_nsec - start.tv_nsec)/ BILLION;
+    
+    total = time_mq + pacient->time_queue;
+    pacient->total = (((double)(pacient->triage_time + pacient->doctor_time))/1000) + total;
+
+    sem_wait(shm_sem_doc->stat_mutex);
+    dum1 = statistics->time_betw_triage_attend * statistics->treated;
+    dum2 = statistics->total_time * statistics->treated;
+    (statistics -> treated)++;
+    statistics -> time_betw_triage_attend = (dum1 + time_mq) / statistics->treated; 
+    statistics -> total_time = (dum2 + pacient->total) / statistics->treated; 
+    sem_post(shm_sem_doc->stat_mutex);
 }
 
 void replacing_doctors(int shift_length) {
@@ -91,13 +100,14 @@ void processes_exit(int signum){
         num_messages = buf.msg_qnum;
         if(num_messages != 0){
             buffer = (pacient_p)malloc(sizeof(Pacient));
-            msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
-            shm_sem_doc -> mq_read++;
+            msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -3, 0);
+            clock_gettime(CLOCK_MONOTONIC, &buffer->finish_mq);
             sem_post(shm_sem_doc->check_mutex);
             printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer -> id, buffer->mtype);
             usleep(buffer -> doctor_time);
             printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer -> id);
-            //write statistics
+            w_stats_d(buffer);
+            free(buffer);
         } else {
             sem_post(shm_sem_doc->check_mutex);
             break;
@@ -106,31 +116,33 @@ void processes_exit(int signum){
     // acabam os doctores
     printf("[%ld] DESTROYED\n", (long)getpid());
     //printf("MQ READ-> %d\n", shm_sem_doc->mq_read);
+    print_stats();
     exit(0);
     return;
 }
 
 void start_shift() {
-    pacient_p buffer = (pacient_p)malloc(sizeof(Pacient));
+    pacient_p buffer;
     int a;
+    long mtype = -3;
 
     signal(SIGINT, SIG_IGN);
     signal(SIGALRM, exit_doc);
     alarm(configuration -> shift);
 
     while(TRUE){
+        buffer = (pacient_p)malloc(sizeof(Pacient));
         signal(SIGUSR1, processes_exit);
-        sem_wait(shm_sem_doc->mq_doc_mutex);
         signal(SIGALRM, exit_doc_post);
-        msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), -MAX_PRIORITY, 0);
+        msgrcv(msgq_id, buffer, sizeof(Pacient) - sizeof(long), mtype, 0);
         signal(SIGUSR1, SIG_IGN);
         signal(SIGALRM, SIG_IGN);
-        shm_sem_doc -> mq_read++;
-        sem_post(shm_sem_doc->mq_doc_mutex);
+        clock_gettime(CLOCK_MONOTONIC, &buffer->finish_mq);
         printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer -> id, buffer->mtype);
         usleep(buffer -> doctor_time);
         printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer -> id);
-        //write statistics
+        w_stats_d(buffer);
+        free(buffer);
 
         if(shm_sem_doc->flag_p == 1)
             processes_exit(0);

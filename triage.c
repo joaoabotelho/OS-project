@@ -6,7 +6,7 @@ void create_triage_threads(){
     for(i = 0; i < configuration->triage; i++){
         printf("Create Triage %d\n", i+1);
         threads_id[i] = i;
-        pthread_create(&triage[i], NULL, triage_worker, &threads_id[i]);
+        pthread_create(&(triage[i]), NULL, triage_worker, &(threads_id[i]));
     }
 
     return;
@@ -36,11 +36,10 @@ void threads_exit(int signum){
         sem_wait(check_mutex);
         if(!is_empty()){
             // finish queue
-            sem_wait(pop_mutex);
+            pthread_mutex_lock(&queue_mutex);
             pacient = pop();
+            pthread_mutex_unlock(&queue_mutex);
             clock_gettime(CLOCK_MONOTONIC, &pacient->finish_queue);
-            sem_post(pop_mutex);
-            sem_post(check_mutex);
             printf("Triage examining pacient (%d)\n", pacient->id);
             usleep(pacient -> triage_time);
             sem_wait(mq_triage_mutex);
@@ -66,22 +65,22 @@ void threads_exit(int signum){
 
 void* triage_worker(void* i){
     pacient_p pacient;
+    printf("IM HERE\n");
     int id = *((int *)i) + 1;
     printf("TRIAGE %d WORKING\n", id);
 
     while(TRUE){
-        sem_wait(queue_empty);
+        sem_wait(queue_full);
         if(shm_sem_doc -> flag_t == 1){
             printf("threads finished\n");
             kill(doctors_parent, SIGUSR1);
             pthread_exit(NULL);
         }
-        sem_wait(queue_mutex);
-        sem_wait(pop_mutex);
+
+        pthread_mutex_lock(&queue_mutex);
         pacient = pop();
+        pthread_mutex_unlock(&queue_mutex);
         clock_gettime(CLOCK_MONOTONIC, &pacient->finish_queue);
-        sem_post(pop_mutex);
-        sem_post(queue_mutex);
         printf("Triage %d examining pacient (%d)\n", id, pacient->id); 
         usleep(pacient -> triage_time);
         //sem_wait(mq_triage_mutex);

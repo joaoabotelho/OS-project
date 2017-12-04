@@ -61,11 +61,11 @@ void* read_from_named_pipe(void *i){
                 new_pacient -> doctor_time = d_time;
                 new_pacient -> mtype = mtype; 
 
-                sem_wait(queue_mutex);
+                pthread_mutex_lock(&queue_mutex);
                 append(new_pacient); // adds to queue
+                pthread_mutex_unlock(&queue_mutex);
                 clock_gettime(CLOCK_MONOTONIC, &new_pacient->start_queue);
-                sem_post(queue_mutex);
-                sem_post(queue_empty);
+                sem_post(queue_full);
             }
         }
     }

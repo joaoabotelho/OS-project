@@ -1,18 +1,16 @@
 #include "header.h"
 
 void create_semaphores(){
-    sem_unlink("QUEUE_EMPTY");
-    sem_unlink("QUEUE_MUTEX");
-    sem_unlink("POP_MUTEX");
+    sem_unlink("QUEUE_FULL");
     sem_unlink("MQ_TRIAG");
     sem_unlink("MQ_DOC");
     sem_unlink("MQ_EMPTY");
     sem_unlink("CHECK_MUTEX");
     sem_unlink("CHECK_MUTEX_DOC");
     sem_unlink("STAT_MUTEX");
-    queue_empty = sem_open("QUEUE_EMPTY", O_CREAT, 0700, 0);
-    queue_mutex = sem_open("QUEUE_MUTEX", O_CREAT, 0700, 1);
-    pop_mutex = sem_open("POP_MUTEX", O_CREAT, 0700, 1);
+    pthread_mutex_init(&queue_mutex, NULL);
+    pthread_mutex_lock(&queue_mutex);
+    queue_full = sem_open("QUEUE_EMPTY", O_CREAT, 0700, 0);
     check_mutex = sem_open("CHECK_MUTEX", O_CREAT, 0700, 1);
     mq_triage_mutex = sem_open("MQ_TRIAG", O_CREAT, 0700, 1);
     shm_sem_doc -> mq_doc_mutex = sem_open("MQ_DOC", O_CREAT, 0700, 1);
@@ -22,17 +20,13 @@ void create_semaphores(){
 }
 
 void semaphores_destroyed(){
-    sem_close(queue_empty);
-    sem_close(queue_mutex);
-    sem_close(pop_mutex);
+    sem_close(queue_full);
     sem_close(check_mutex);
     sem_close(mq_triage_mutex);
     sem_close(shm_sem_doc -> mq_doc_mutex);
     sem_close(shm_sem_doc -> check_mutex);
     sem_close(shm_sem_doc -> stat_mutex);
     sem_unlink("QUEUE_EMPTY");
-    sem_unlink("QUEUE_MUTEX");
-    sem_unlink("POP_MUTEX");
     sem_unlink("MQ_TRIAG");
     sem_unlink("MQ_DOC");
     sem_unlink("MQ_EMPTY");
@@ -48,7 +42,7 @@ void cleanup(int signum){
     printf("Named pipe closed\n"); 
     shm_sem_doc->flag_t = 1;
     for(i = 0; i < configuration -> triage; i++){
-        sem_post(queue_empty);
+        sem_post(queue_full);
     }
 /*
     for(int i=0; i < configuration->triage; i++){
@@ -95,8 +89,10 @@ int main(){
     printf("%ld --> eu\n", (long)getpid());
     signal(SIGINT, cleanup);
     sleep(1000);
+    free(threads_id);
+    free(triage);
     sleep(1000);
-
+    
 /*    while(shm_sem_doc->flag_t != 1);
 
     for(int i=0; i < configuration->triage; i++){

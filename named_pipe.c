@@ -23,7 +23,7 @@ void exit_np_thread(int signum){
 
 
 void* read_from_named_pipe(void *i){
-    pacient_p new_pacient;
+    Pacient new_pacient;
     int pacient_id = 1;
     int a, iter;
     char str[MAX_BUFFER_SIZE];
@@ -49,22 +49,20 @@ void* read_from_named_pipe(void *i){
                 iter = 1;
 
             for(a = 0; a < iter; a++){
-                new_pacient = (pacient_p)malloc(sizeof(Pacient));
-
                 if(iter == 1)
-                    strcpy(new_pacient -> name, name);
+                    strcpy(new_pacient.name, name);
                 else
-                    strcpy(new_pacient -> name, "");
+                    strcpy(new_pacient.name, "");
 
-                new_pacient -> id = pacient_id++;
-                new_pacient -> triage_time = t_time;
-                new_pacient -> doctor_time = d_time;
-                new_pacient -> mtype = mtype; 
+                new_pacient.id = pacient_id++;
+                new_pacient.triage_time = t_time;
+                new_pacient.doctor_time = d_time;
+                new_pacient.mtype = mtype; 
 
                 pthread_mutex_lock(&queue_mutex);
                 append(new_pacient); // adds to queue
                 pthread_mutex_unlock(&queue_mutex);
-                clock_gettime(CLOCK_MONOTONIC, &new_pacient->start_queue);
+                clock_gettime(CLOCK_MONOTONIC, &new_pacient.start_queue);
                 sem_post(queue_full);
             }
         }

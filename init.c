@@ -40,6 +40,8 @@ void create_sem_shm() {
         perror("Error: ");
     }
     shm_sem_doc = shmat(sem_shm, NULL, 0);
+    if(shm_sem_doc == (void *)-1)
+        perror("Error: ");
     return;
 }
 

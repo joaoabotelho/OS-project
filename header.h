@@ -43,10 +43,9 @@ typedef struct stats {
     double time_betw_triage_attend;
     double total_time;
 } Stats;
-
-typedef struct pacient *pacient_p;
+//typedef struct pacient *pacient_p;
 typedef struct pacient{
-    long mtype;
+    long int mtype;
     char name[MAX_BUFFER_SIZE];
     int id;
     int triage_time;
@@ -57,26 +56,30 @@ typedef struct pacient{
 
 typedef struct pacients_list *pacients_list_p;
 typedef struct pacients_list {
-    pacient_p pacient;
+   // pacient_p pacient;
+    Pacient pacient; 
     pacients_list_p next;
 } Pacients_list;
 
 typedef struct sems *sems_p;
 typedef struct sems {
     sem_t *stat_mutex, *mq_doc_mutex, *check_mutex;
-    int flag_t, flag_p;
+    int flag_p, condition;
 } Sems;
 
 pthread_t read_npipe_thread;
 pthread_t *triage;
 pthread_mutex_t queue_mutex; 
+pthread_mutex_t la; 
 sems_p shm_sem_doc;
-sem_t *mq_triage_mutex, *queue_full, *check_mutex;
+sem_t *queue_full;
 pid_t doctors_parent;
 int shm_id;
 int sem_shm;
 int np_read_id;
 int *threads_id;
+int thread_condition;
+int exit_triage;
 struct timespec start_main;
 
 pacients_list_p queue_head;
@@ -109,8 +112,10 @@ void create_sem_shm();
 
 //queue_actions.c
 void print_queue();
-void append(pacient_p pacient);
-pacient_p pop();
+//void append(pacient_p pacient);
+void append(Pacient pacient);
+//pacient_p pop();
+Pacient pop();
 int is_empty();
 
 //stats.c

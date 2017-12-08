@@ -4,7 +4,7 @@ void print_queue(){
     pacients_list_p head_cp = queue_head;
     printf("\n\n###############\nQueue list:\n");
     while(head_cp){
-        printf("%s %ld %d %d %d\n", head_cp -> pacient.name, head_cp->pacient.mtype, head_cp->pacient.id, head_cp->pacient.triage_time, head_cp->pacient.doctor_time);
+//        printf("%s %ld %d %d %d\n", head_cp -> pacient.name, head_cp->pacient.mtype, head_cp->pacient.id, head_cp->pacient.triage_time, head_cp->pacient.doctor_time);
         head_cp = head_cp -> next;
     }
     printf("\n#################\n");

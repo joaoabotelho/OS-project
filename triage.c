@@ -33,7 +33,6 @@ void* triage_worker(void* i){
     Pacient pacient;
     int id = *((int *)i) + 1;
     int condition = TRUE;
-    printf("TRIAGE %d WORKING\n", id);
 
     while(condition){
         sem_wait(queue_full);

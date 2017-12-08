@@ -15,7 +15,8 @@ void start_named_pipe(){
 }
 
 void exit_np_thread(int signum){
-    close(input_pipe_id);
+    printf("exit np thread\n");
+    close(np_read_id);
     unlink(PIPE_NAME);
     pthread_exit(NULL);
     return;
@@ -30,6 +31,9 @@ void* read_from_named_pipe(void *i){
     char name[MAX_BUFFER_SIZE];
     int t_time, d_time;
     long mtype;
+    int needed_triages;
+    char *p;
+
 
     signal(SIGINT, exit_np_thread);
 
@@ -37,10 +41,12 @@ void* read_from_named_pipe(void *i){
         read(np_read_id, str, sizeof(str));
         printf("Received: %s\n", str); 
 
-        if(strcmp(str, "STATS") == 0){
-            sem_wait(shm_sem_doc->stat_mutex);
-            print_stats();
-            sem_post(shm_sem_doc->stat_mutex);
+        if(strstr(str, "TRIAGE=") != NULL){
+            p = strtok(str, "=");
+            p = strtok(NULL, " ");
+            needed_triages = atoi(p) - configuration->triage;
+            printf("We need %d TRIAGES\n", needed_triages);
+
         } else {
             sscanf(str, "%s %d %d %ld", name, &t_time, &d_time, &mtype);
             if(isdigit(name[0]))

@@ -27,11 +27,11 @@ void cleanup(int signum){
     pthread_cancel(read_npipe_thread);
     printf("Named pipe closed\n"); 
     exit_triage = 1;
-   for(i=0; i < configuration->triage; i++){
+    for(int i=0; i < configuration->triage; i++){
         sem_post(queue_full);
     }
 
-    for(i=0; i < configuration->triage; i++){
+    for(int i=0; i < configuration->triage; i++){
         pthread_join(triage[i], NULL);
     }
     printf("Triages done and closed\n");
@@ -45,40 +45,22 @@ void cleanup(int signum){
     shmdt(statistics);
     shmctl(shm_id, IPC_RMID, NULL);
     shmctl(sem_shm, IPC_RMID, NULL);
-    /*if(munmap(file, statbuf.st_size) < 0){
-        fprintf(stderr, "file open error: %s\n", strerror(errno));
-        exit(1);
-    }
-    close(file_id);
-    */
     exit(0);
 }
 
 int main(int argc, char *argv[]){
     int id_read_npipe_thread;
     int i;
-    // METER FLAG NO MAKEFILE -lrt (LINUX)
 
     signal(SIGINT, SIG_IGN);
-    /*
     if(argc != 2){
         printf("usage: ./mycp <file>\n");
         exit(1);
     }
 
     if((file_id = open(argv[1], O_RDWR | O_CREAT, 0600)) < 0){
-        fprintf(stderr, "file open error: %s\n", strerror(errno));
-        exit(1);
-    }
-    lseek(file_id, statbuf.st_size -1, SEEK_SET);
-    write(file_id, "", 1);
-    
-    if((file = mmap(0, statbuf.st_size, PROT_WRITE, MAP_SHARED, file_id, 0)) == (caddr_t)-1){
-        fprintf(stderr, "file mmap error: %s\n", strerror(errno));
-        exit(1);
-    }
-    */
 
+    }
     pacients_list_p queue_head = NULL;
     pacients_list_p queue_tail = NULL;
     create_sem_shm();

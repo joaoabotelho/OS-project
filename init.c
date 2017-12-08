@@ -9,7 +9,7 @@ config_p load_configuration() {
 
     configuration= (config_p)malloc(sizeof(Config));
     check_memory_config(configuration);
-    label = (char*)malloc(CHAR_SIZE * sizeof(char));
+    label = (char*)malloc(MAX_BUFFER_SIZE * sizeof(char));
     check_memory_char(label);
 
     config = fopen("config.txt", "r");

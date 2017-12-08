@@ -7,7 +7,6 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
     signal(SIGUSR1, processes_exit);
 
     if(!(doctors_parent = fork())){
-        printf("PAI----->%ld -----> %ld\n", (long)doctors_parent, (long)getppid());
         for(i = 0; i < n; i++) {
             if(!(id = fork())){
                 printf("[%ld] Created\n", (long)getpid());
@@ -66,29 +65,18 @@ void temp_doctor(int shift_length){
 
 void exit_doc(int signum){
     printf("[%ld] Destroyed\n", (long)getpid());
-    //printf("MQ READ-> %d\n",shm_sem_doc->mq_read);
     exit(0);
 }
 
 void processes_exit(int signum){
     int i;
-
-    printf("$$$$$$$$$$$ %ld $$$$$$$$$$$$$$$\n", (long)getppid());
-    if(getpid() == doctors_parent){
-        printf("########### DOCTORS PARENT ##############\n");
-        terminate_doctors();
-    }
-    /*printf("RECEIVED SIGUSR1 [%ld]\n", (long)getpid());*/
     int rc;
     struct msqid_ds buf;
     int num_messages;
-    //pacient_p buffer;
     Pacient buffer;
     signal(SIGALRM, SIG_IGN);
 
-    // semaforo para passar so 1 processo checkar de cada vez se a queue esta vazia
     while(TRUE){
-        //limpar a queue
         sem_wait(shm_sem_doc->check_mutex);
         rc = msgctl(msgq_id, IPC_STAT, &buf);
         num_messages = buf.msg_qnum;
@@ -105,9 +93,7 @@ void processes_exit(int signum){
             break;
         }
     }
-    // acabam os doctores
     printf("[%ld] DESTROYED\n", (long)getpid());
-    print_stats();
     exit(0);
     return;
 }
@@ -169,12 +155,11 @@ void start_shift() {
 void terminate_doctors(int sig){
   int i;
 
-    if(getpid() == doctors_parent)
-        printf("ESTOU AQUI!!\n");
   for(i = 0; i < configuration -> doctors; i++){
-    printf("FINISHED\n");
     wait(NULL);
+    printf("FINISHED\n");
   }
   printf("Doctors done\n");
+  print_stats();
   exit(0);
 }

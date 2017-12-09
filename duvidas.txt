@@ -1,0 +1,2 @@
+id threads???
+sigusr1 ativado pelo named pipe??

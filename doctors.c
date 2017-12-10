@@ -1,5 +1,6 @@
 #include "header.h"
 
+/*create first doctors*/
 void create_doctor_processes(int n, int shift_length, stats_p stat) {
     int i;
     pid_t id;
@@ -9,7 +10,9 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
     if(!(doctors_parent = fork())){
         for(i = 0; i < n; i++) {
             if(!(id = fork())){
+                #ifdef DEBUG
                 printf("[%ld] Created\n", (long)getpid());
+                #endif
                 start_shift();
             }
         }
@@ -18,6 +21,7 @@ void create_doctor_processes(int n, int shift_length, stats_p stat) {
     }
 }
 
+/*writing pacients to stats*/
 void w_stats_d(Pacient pacient){
     struct timespec start, finish;
     double time_mq, total, dum1, dum2;
@@ -39,6 +43,7 @@ void w_stats_d(Pacient pacient){
     sem_post(shm_sem_doc->stat_mutex);
 }
 
+/*replace doctors when they die*/
 void replacing_doctors(int shift_length) {
     pid_t id;
     struct msqid_ds buf;
@@ -46,19 +51,19 @@ void replacing_doctors(int shift_length) {
     Pacient buffer;
     char msg[MAX_BUFFER_SIZE];
 
+    /*create temp doctor*/
     signal(SIGINT, terminate_doctors);
     if(fork() == 0){
-        printf("IM WAITING\n");
+        /*semaphore to activate temp doctor*/
         sem_wait(shm_sem_doc -> rep_doc);
         sem_post(shm_sem_doc -> rep_doc);
-        printf("created temp\n");
+        #ifdef DEBUG
+        printf("Created Temp Doc");
+        #endif
         if(fork() == 0){
             sem_wait(shm_sem_doc->check_mutex);
             rc = msgctl(msgq_id, IPC_STAT, &buf);
             num_messages = buf.msg_qnum;
-            printf("NUM MSGS: %d\n", num_messages);
-            printf("MQ MAX %d\n", configuration -> mq_max);
-            printf("FLAG %d\n", shm_lengths_p -> temp_activated);
             sem_wait(shm_sem_doc -> msgq_full);
             if(shm_sem_doc -> flag_p == 1){
                 processes_exit(0);
@@ -67,15 +72,18 @@ void replacing_doctors(int shift_length) {
                 msgrcv(msgq_id, &buffer, sizeof(buffer) - sizeof(long), -3, 0);
                 if(num_messages < (configuration -> mq_max) && (shm_lengths_p -> temp_activated) == 1){
                     sem_wait(shm_sem_doc -> rep_doc);
-                    printf("DOWN\n");
                     shm_lengths_p -> temp_activated = 0;
                 }
 
                 clock_gettime(CLOCK_MONOTONIC, &buffer.finish_mq);
                 sem_post(shm_sem_doc->check_mutex);
+#ifdef DEBUG
                 printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer.id, buffer.mtype);
+#endif
                 sleep(buffer.doctor_time);
+#ifdef DEBUG
                 printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer.id);
+#endif
                 w_stats_d(buffer);
             } else {
                 sem_post(shm_sem_doc->check_mutex);
@@ -84,6 +92,7 @@ void replacing_doctors(int shift_length) {
         }
     }
 
+    /*replace doctors*/
     while(TRUE){
         wait(NULL);
         if(!(id = fork())){
@@ -98,19 +107,12 @@ void replacing_doctors(int shift_length) {
     return;
 }
 
-void temp_doctor(int shift_length){
-    pid_t id;
-
-    if(!(id=fork())){
-        printf("[%ld] Created\n", (long)getpid());
-        start_shift();
-    }
-    return;
-}
-
+/*exiting doctors and write to stats*/
 void exit_doc(int signum){
     char msg[MAX_BUFFER_SIZE];
+    #ifdef DEBUG
     printf("[%ld] Destroyed\n", (long)getpid());
+    #endif
     sem_wait(shm_sem_doc -> log_file_mutex);
     sprintf(msg, "[%ld] Doctor just finished\n", (long)getpid());
     write_to_log(msg);
@@ -118,6 +120,7 @@ void exit_doc(int signum){
     exit(0);
 }
 
+/*fuction to clean message queue and remove processes*/
 void processes_exit(int signum){
     int i;
     int rc;
@@ -135,16 +138,22 @@ void processes_exit(int signum){
             msgrcv(msgq_id, &buffer, sizeof(buffer) - sizeof(long), -3, 0);
             clock_gettime(CLOCK_MONOTONIC, &buffer.finish_mq);
             sem_post(shm_sem_doc->check_mutex);
+#ifdef DEBUG
             printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer.id, buffer.mtype);
+#endif
             sleep(buffer.doctor_time);
+#ifdef DEBUG
             printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer.id);
+#endif
             w_stats_d(buffer);
         } else {
             sem_post(shm_sem_doc->check_mutex);
             break;
         }
     }
+#ifdef DEBUG
     printf("[%ld] DESTROYED\n", (long)getpid());
+#endif
     sem_wait(shm_sem_doc -> log_file_mutex);
     sprintf(msg, "[%ld] Doctor just finished\n", (long)getpid());
     write_to_log(msg);
@@ -166,6 +175,7 @@ void start_shift() {
     memset(&end_shift, 0, sizeof(end_shift));
     end_shift.sa_handler = exit_doc;
 
+    /*alarm to trigger when shift has ended*/
     if(sigaction(SIGALRM, &end_shift, 0) < 0){
         perror("sigaction SIGALRM:" );
         exit(1);
@@ -183,35 +193,40 @@ void start_shift() {
             processes_exit(0);
         }
 
+        /*receive messages*/
         if(msgrcv(msgq_id, &buffer, sizeof(buffer) - sizeof(long), mtype, 0) < 0){
-            rc = msgctl(msgq_id, IPC_STAT, &buf);
-            num_messages = buf.msg_qnum;
-            if(num_messages < ((configuration -> mq_max)* 0.8 + 0.5) && (shm_lengths_p -> temp_activated) == 1){
-                sem_wait(shm_sem_doc -> rep_doc);
-                printf("DOWN\n");
-                shm_lengths_p -> temp_activated = 0;
-            }
             printf("############ [%ld] ###########", (long)getpid());
             perror("Message receive error: ");
             exit(1);
         }
-
+        rc = msgctl(msgq_id, IPC_STAT, &buf);
+        num_messages = buf.msg_qnum;
+        if(num_messages < ((configuration -> mq_max)* 0.8 + 0.5) && (shm_lengths_p -> temp_activated) == 1){
+            sem_wait(shm_sem_doc -> rep_doc);
+            shm_lengths_p -> temp_activated = 0;
+        }
         if(sigprocmask(SIG_BLOCK, &mask, &orig_mask) < 0){
             printf("############ [%ld] ###########", (long)getpid());
             perror ("sigprocmask : ");
             exit(1);
         }
         clock_gettime(CLOCK_MONOTONIC, &buffer.finish_mq);
+        #ifdef DEBUG
         printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer.id, buffer.mtype);
+        #endif
         sleep(buffer.doctor_time);
+        #ifdef DEBUG
         printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer.id);
+        #endif
         w_stats_d(buffer);
 
         if(shm_sem_doc->flag_p == 1)
             processes_exit(0);
 
         if(sigprocmask(SIG_SETMASK, &orig_mask, NULL) < 0){
+            #ifdef DEBUG
             printf("############ [%ld] ###########", (long)getpid());
+            #endif
             perror ("sigprocmask : ");
             exit(1);
         }
@@ -225,9 +240,13 @@ void terminate_doctors(int sig){
 
     for(i = 0; i < configuration -> doctors; i++){
         wait(NULL);
+        #ifdef DEBUG
         printf("FINISHED\n");
+        #endif
     }
+    #ifdef DEBUG
     printf("Doctors done\n");
+    #endif
     print_stats();
     exit(0);
 }

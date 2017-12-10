@@ -17,7 +17,9 @@ void print_stats(){
 int write_to_log(char msg[]){
     int len;
 
+    #ifdef DEBUG
     printf("%s\n", msg);
+    #endif
     len = shm_lengths_p -> len_file;
     shm_lengths_p -> len_file += strlen(msg);
     if (ftruncate(fd, shm_lengths_p -> len_file) != 0){

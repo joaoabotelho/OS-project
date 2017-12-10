@@ -2,12 +2,15 @@
 
 void print_queue(){
     pacients_list_p head_cp = queue_head;
+    #ifdef DEBUG
     printf("\n\n###############\nQueue list:\n");
+    #endif
     while(head_cp){
-//        printf("%s %ld %d %d %d\n", head_cp -> pacient.name, head_cp->pacient.mtype, head_cp->pacient.id, head_cp->pacient.triage_time, head_cp->pacient.doctor_time);
         head_cp = head_cp -> next;
     }
+    #ifdef DEBUG
     printf("\n#################\n");
+    #endif
 }
 
 //void append(pacient_p pacient){
@@ -28,6 +31,7 @@ void append(Pacient pacient){
     return;
 }
 
+/*remove first element of queue*/
 Pacient pop(){
 //pacient_p pop(){
     //pacient_p first;

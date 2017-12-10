@@ -41,7 +41,9 @@ void semaphores_destroyed(){
 void cleanup(int signum){
     int i;
     pthread_cancel(read_npipe_thread);
+    #ifdef DEBUG
     printf("Named pipe closed\n");
+    #endif
     exit_triage = 1;
     for(i=0; i < configuration->triage; i++){
         sem_post(queue_full);
@@ -50,17 +52,21 @@ void cleanup(int signum){
     for(i=0; i < configuration->triage; i++){
         pthread_join(triage[i], NULL);
     }
+    #ifdef DEBUG
     printf("Triages done and closed\n");
+    #endif
 
     wait(NULL);
     semaphores_destroyed();
+    #ifdef DEBUG
     printf("Semaphore destroyed\n");
+    #endif
     msgctl(msgq_id, IPC_RMID, NULL);
     printf("MQ removed\n");
     shmdt(shm_sem_doc);
     shmdt(statistics);
     shmctl(shm_id, IPC_RMID, NULL);
-    if( munmap(addr,shm_lengths_p -> len_file) == -1)
+    if(munmap(addr,shm_lengths_p -> len_file) == -1)
         perror("Error in munmap");
     exit(0);
 }
@@ -69,6 +75,10 @@ int main(int argc, char *argv[]){
     int id_read_npipe_thread;
     int i;
     // METER FLAG NO MAKEFILE -lrt (LINUX)
+
+    #ifdef DEBUG
+    printf("started\n");
+    #endif
 
     signal(SIGINT, SIG_IGN);
 

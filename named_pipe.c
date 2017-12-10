@@ -14,8 +14,11 @@ void start_named_pipe(){
     }
 }
 
+
 void exit_np_thread(int signum){
+    #ifdef DEBUG
     printf("exit np thread\n");
+    #endif
     close(np_read_id);
     unlink(PIPE_NAME);
     pthread_exit(NULL);
@@ -40,13 +43,18 @@ void* read_from_named_pipe(void *i){
 
     while(TRUE){
         read(np_read_id, str, sizeof(str));
+        #ifdef DEBUG
         printf("Received: %s\n", str);
+        #endif
 
+        /*if number of triages has to change*/
         if(strstr(str, "TRIAGE =") != NULL){
             p = strtok(str, "=");
             p = strtok(NULL, " ");
             needed_triages = atoi(p);
+            #ifdef DEBUG
             printf("We need %d TRIAGES\n", needed_triages);
+            #endif
 
             pthread_mutex_lock(&queue_mutex);
             if(needed_triages > configuration -> triage){
@@ -63,10 +71,13 @@ void* read_from_named_pipe(void *i){
             if(needed_triages < configuration -> triage){
                configuration -> triage = needed_triages;
             }
+            #ifdef DEBUG
             printf("added\n");
+            #endif
 
             pthread_mutex_unlock(&queue_mutex);
 
+        /*receiving pacients and sending them to queue*/
         } else {
             sscanf(str, "%s %d %d %ld", name, &t_time, &d_time, &mtype);
             if(isdigit(name[0]))

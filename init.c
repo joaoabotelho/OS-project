@@ -1,5 +1,6 @@
 #include "header.h"
 
+/*reads configuration from file*/
 config_p load_configuration() {
     FILE *config;
     char *label;
@@ -45,6 +46,7 @@ void create_sem_shm() {
     return;
 }
 
+/*alocates shared memory to semaphores*/
 void create_lengths_shm(){
     lengths_shm = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
     if(lengths_shm == -1){
@@ -56,6 +58,7 @@ void create_lengths_shm(){
     }
 }
 
+/*alocates shared memory to statistics*/
 stats_p create_shared_memory() {
     shm_id = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
     if(shm_id == -1){

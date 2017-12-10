@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#define DEBUG
 #define FALSE 0
 #define MAX_BUFFER_SIZE 1024
 #define PIPE_NAME "np_client_server"

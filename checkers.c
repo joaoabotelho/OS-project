@@ -1,5 +1,7 @@
 #include "header.h"
 
+/*verifications of memory allocations*/
+
 void check_memory_char(char *s){
   if(!s){
     printf("Memory allocation failed");

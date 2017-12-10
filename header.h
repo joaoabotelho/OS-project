@@ -21,12 +21,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#define DEBUG
 #define FALSE 0
 #define MAX_BUFFER_SIZE 1024
 #define PIPE_NAME "np_client_server"
 #define TRUE 1
 #define MAX_PRIORITY 10
 #define BILLION 1E9
+#define FILEMODE S_IRWXU | S_IRGRP | S_IROTH
 
 typedef struct config *config_p;
 typedef struct config {
@@ -58,35 +60,49 @@ typedef struct pacient{
 typedef struct pacients_list *pacients_list_p;
 typedef struct pacients_list {
    // pacient_p pacient;
-    Pacient pacient; 
+    Pacient pacient;
     pacients_list_p next;
 } Pacients_list;
 
 typedef struct sems *sems_p;
 typedef struct sems {
-    sem_t *stat_mutex, *check_mutex;
+    sem_t *stat_mutex, *check_mutex, *log_file_mutex, *rep_doc, *msgq_full;
     int flag_p;
 } Sems;
 
+typedef struct lengths *lengths_p;
+typedef struct lengths{
+    size_t len_file;
+    int temp_activated;
+}Lengths;
+
 config_p configuration;
+int fd, ret;
+char *addr;
+struct stat st;
+
 int *threads_id;
 int msgq_id;
+int new_num_triages;
 int np_read_id;
 int sem_shm;
+int lengths_shm;
 int shm_id;
 int thread_condition;
 int exit_triage;
 int file_id;
 char *file;
 struct stat statbuf;
+lengths_p shm_lengths_p;
 pacients_list_p queue_head;
 pacients_list_p queue_tail;
 pid_t doctors_parent;
-pthread_mutex_t queue_mutex; 
+pthread_mutex_t queue_mutex;
 pthread_t *triage;
 pthread_t read_npipe_thread;
 sem_t *queue_full;
 sems_p shm_sem_doc;
+sem_t *block_main;
 stats_p statistics;
 
 //checkers.c
@@ -128,4 +144,7 @@ void* read_from_named_pipe(void *i);
 void create_triage_threads();
 void* triage_worker(void* i);
 
+int write_to_log(char msg[]);
+void create_lengths_shm();
+void print_log(int signum);
 #endif

@@ -14,8 +14,11 @@ void start_named_pipe(){
     }
 }
 
+
 void exit_np_thread(int signum){
+    #ifdef DEBUG
     printf("exit np thread\n");
+    #endif
     close(np_read_id);
     unlink(PIPE_NAME);
     pthread_exit(NULL);
@@ -26,27 +29,55 @@ void exit_np_thread(int signum){
 void* read_from_named_pipe(void *i){
     Pacient new_pacient;
     int pacient_id = 1;
-    int a, iter;
+    int a, iter, b;
     char str[MAX_BUFFER_SIZE];
     char name[MAX_BUFFER_SIZE];
     int t_time, d_time;
     long mtype;
     int needed_triages;
     char *p;
+    int dif;
 
 
     signal(SIGINT, exit_np_thread);
 
     while(TRUE){
         read(np_read_id, str, sizeof(str));
-        printf("Received: %s\n", str); 
+        #ifdef DEBUG
+        printf("Received: %s\n", str);
+        #endif
 
-        if(strstr(str, "TRIAGE=") != NULL){
+        /*if number of triages has to change*/
+        if(strstr(str, "TRIAGE =") != NULL){
             p = strtok(str, "=");
             p = strtok(NULL, " ");
-            needed_triages = atoi(p) - configuration->triage;
+            needed_triages = atoi(p);
+            #ifdef DEBUG
             printf("We need %d TRIAGES\n", needed_triages);
+            #endif
 
+            pthread_mutex_lock(&queue_mutex);
+            if(needed_triages > configuration -> triage){
+                dif = needed_triages - configuration -> triage;
+                threads_id = (int *)realloc(threads_id, sizeof(int) * needed_triages);
+                triage = (pthread_t *)realloc(triage, sizeof(pthread_t) * needed_triages);
+                for(b = (configuration -> triage); b < needed_triages; b++){
+                    threads_id[b] = b;
+                    pthread_create(&(triage[b]), NULL, triage_worker, &(threads_id[b]));
+                }
+                configuration -> triage = needed_triages;
+            }
+
+            if(needed_triages < configuration -> triage){
+               configuration -> triage = needed_triages;
+            }
+            #ifdef DEBUG
+            printf("added\n");
+            #endif
+
+            pthread_mutex_unlock(&queue_mutex);
+
+        /*receiving pacients and sending them to queue*/
         } else {
             sscanf(str, "%s %d %d %ld", name, &t_time, &d_time, &mtype);
             if(isdigit(name[0]))
@@ -63,7 +94,7 @@ void* read_from_named_pipe(void *i){
                 new_pacient.id = pacient_id++;
                 new_pacient.triage_time = t_time;
                 new_pacient.doctor_time = d_time;
-                new_pacient.mtype = mtype; 
+                new_pacient.mtype = mtype;
 
                 pthread_mutex_lock(&queue_mutex);
                 append(new_pacient); // adds to queue

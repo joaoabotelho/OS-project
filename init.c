@@ -1,5 +1,6 @@
 #include "header.h"
 
+/*reads configuration from file*/
 config_p load_configuration() {
     FILE *config;
     char *label;
@@ -35,7 +36,7 @@ config_p load_configuration() {
 }
 
 void create_sem_shm() {
-    sem_shm = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
+    sem_shm = shmget(IPC_PRIVATE, sizeof(Sems), IPC_CREAT|0777);
     if(sem_shm == -1){
         perror("Error: ");
     }
@@ -45,6 +46,19 @@ void create_sem_shm() {
     return;
 }
 
+/*alocates shared memory to semaphores*/
+void create_lengths_shm(){
+    lengths_shm = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
+    if(lengths_shm == -1){
+        perror("Error: ");
+    }
+    shm_lengths_p = shmat(lengths_shm, NULL, 0);
+    if(shm_lengths_p == (void *)-1){
+        perror("Error: ");
+    }
+}
+
+/*alocates shared memory to statistics*/
 stats_p create_shared_memory() {
     shm_id = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
     if(shm_id == -1){

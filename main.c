@@ -1,12 +1,15 @@
 #include "header.h"
 
 void create_semaphores(){
+    sem_unlink("BLOCK_MAIN");
     sem_unlink("MSGQ_FULL");
     sem_unlink("REP_DOC");
     sem_unlink("LOG_FILE_MUTEX");
     sem_unlink("QUEUE_FULL");
     sem_unlink("CHECK_MUTEX_DOC");
     sem_unlink("STAT_MUTEX");
+    block_main = sem_open("BLOCK_MAIN", O_CREAT, 0700, 0);
+    shm_sem_doc -> msgq_full = sem_open("MSGQ_FULL", O_CREAT, 0700, 0);
     shm_sem_doc -> rep_doc = sem_open("REP_DOC", O_CREAT, 0700, 0);
     shm_sem_doc -> log_file_mutex = sem_open("LOG_FILE_MUTEX", O_CREAT, 0700, 1);
     queue_full = sem_open("QUEUE_FULL", O_CREAT, 0700, 0);
@@ -17,11 +20,17 @@ void create_semaphores(){
 }
 
 void semaphores_destroyed(){
+    sem_close(block_main);
+    sem_close(shm_sem_doc -> msgq_full);
+    sem_close(shm_sem_doc -> rep_doc);
     sem_close(shm_sem_doc -> log_file_mutex);
     sem_close(queue_full);
     sem_close(shm_sem_doc -> check_mutex);
     sem_close(shm_sem_doc -> stat_mutex);
     pthread_mutex_destroy(&queue_mutex);
+    sem_unlink("BLOCK_MAIN");
+    sem_unlink("MSGQ_FULL");
+    sem_unlink("REP_DOC");
     sem_unlink("LOG_FILE_MUTEX");
     sem_unlink("QUEUE_FULL");
     sem_unlink("CHECK_MUTEX_DOC");
@@ -51,13 +60,8 @@ void cleanup(int signum){
     shmdt(shm_sem_doc);
     shmdt(statistics);
     shmctl(shm_id, IPC_RMID, NULL);
-    shmctl(sem_shm, IPC_RMID, NULL);
-    /*if(munmap(file, statbuf.st_size) < 0){
-      fprintf(stderr, "file open error: %s\n", strerror(errno));
-      exit(1);
-      }
-      close(file_id);
-      */
+    if( munmap(addr,shm_lengths_p -> len_file) == -1)
+        perror("Error in munmap");
     exit(0);
 }
 
@@ -105,7 +109,7 @@ int main(int argc, char *argv[]){
 
     signal(SIGINT, cleanup);
     signal(SIGUSR1, print_stats);
-    while(1);
+    sem_wait(block_main);
 
     return 0;
 }

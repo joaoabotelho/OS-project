@@ -59,6 +59,10 @@ void replacing_doctors(int shift_length) {
             printf("NUM MSGS: %d\n", num_messages);
             printf("MQ MAX %d\n", configuration -> mq_max);
             printf("FLAG %d\n", shm_lengths_p -> temp_activated);
+            sem_wait(shm_sem_doc -> msgq_full);
+            if(shm_sem_doc -> flag_p == 1){
+                processes_exit(0);
+            }
             if(num_messages != 0){
                 msgrcv(msgq_id, &buffer, sizeof(buffer) - sizeof(long), -3, 0);
                 if(num_messages < (configuration -> mq_max) && (shm_lengths_p -> temp_activated) == 1){
@@ -70,7 +74,7 @@ void replacing_doctors(int shift_length) {
                 clock_gettime(CLOCK_MONOTONIC, &buffer.finish_mq);
                 sem_post(shm_sem_doc->check_mutex);
                 printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer.id, buffer.mtype);
-                usleep(buffer.doctor_time);
+                sleep(buffer.doctor_time);
                 printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer.id);
                 w_stats_d(buffer);
             } else {
@@ -127,13 +131,12 @@ void processes_exit(int signum){
         sem_wait(shm_sem_doc->check_mutex);
         rc = msgctl(msgq_id, IPC_STAT, &buf);
         num_messages = buf.msg_qnum;
-        printf("dnfsaafkdsjahfkjdsahfkjhadsfkjhasd\n");
         if(num_messages != 0){
             msgrcv(msgq_id, &buffer, sizeof(buffer) - sizeof(long), -3, 0);
             clock_gettime(CLOCK_MONOTONIC, &buffer.finish_mq);
             sem_post(shm_sem_doc->check_mutex);
             printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer.id, buffer.mtype);
-            usleep(buffer.doctor_time);
+            sleep(buffer.doctor_time);
             printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer.id);
             w_stats_d(buffer);
         } else {
@@ -175,6 +178,11 @@ void start_shift() {
 
 
     while(TRUE){
+        sem_wait(shm_sem_doc -> msgq_full);
+        if(shm_sem_doc -> flag_p == 1){
+            processes_exit(0);
+        }
+
         if(msgrcv(msgq_id, &buffer, sizeof(buffer) - sizeof(long), mtype, 0) < 0){
             rc = msgctl(msgq_id, IPC_STAT, &buf);
             num_messages = buf.msg_qnum;
@@ -195,7 +203,7 @@ void start_shift() {
         }
         clock_gettime(CLOCK_MONOTONIC, &buffer.finish_mq);
         printf("[%ld] Doctor attending pacient: (%d) with priority (%ld)\n", (long)getpid(), buffer.id, buffer.mtype);
-        usleep(buffer.doctor_time);
+        sleep(buffer.doctor_time);
         printf("[%ld] Doctor finished pacient (%d)\n", (long)getpid(), buffer.id);
         w_stats_d(buffer);
 

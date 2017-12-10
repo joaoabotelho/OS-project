@@ -55,7 +55,7 @@ void* triage_worker(void* i){
         sprintf(msg, "Triage %d examining pacient (%d)\n", id, pacient.id);
         write_to_log(msg);
         sem_post(shm_sem_doc -> log_file_mutex);
-        usleep(pacient.triage_time);
+        sleep(pacient.triage_time);
         clock_gettime(CLOCK_MONOTONIC, &pacient.start_mq);
         w_stats_t(pacient);
 
@@ -64,6 +64,7 @@ void* triage_worker(void* i){
             perror("Error sending: ");
             exit(1);
         }
+        sem_post(shm_sem_doc -> msgq_full);
         pthread_mutex_unlock(&queue_mutex);
 
         rc = msgctl(msgq_id, IPC_STAT, &buf);
@@ -91,7 +92,11 @@ void* triage_worker(void* i){
             condition = !is_empty();
     }
     printf("Thread %d finished\n", id);
+    int c = 0;
     shm_sem_doc->flag_p = 1;
+    for(c = 0; (c < configuration -> doctors + 1); c++){
+        sem_post(shm_sem_doc -> msgq_full);
+    }
     pthread_exit(NULL);
 
     return NULL;

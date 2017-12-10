@@ -65,7 +65,7 @@ typedef struct pacients_list {
 
 typedef struct sems *sems_p;
 typedef struct sems {
-    sem_t *stat_mutex, *check_mutex, *log_file_mutex, *rep_doc;
+    sem_t *stat_mutex, *check_mutex, *log_file_mutex, *rep_doc, *msgq_full;
     int flag_p;
 } Sems;
 
@@ -101,6 +101,7 @@ pthread_t *triage;
 pthread_t read_npipe_thread;
 sem_t *queue_full;
 sems_p shm_sem_doc;
+sem_t *block_main;
 stats_p statistics;
 
 //checkers.c

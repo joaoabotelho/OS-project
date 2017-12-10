@@ -37,7 +37,7 @@ void *triage_worker(void *i){
     printf("Thread %d working\n", id);
     while(condition){
         printf("%d start cycle\n", id);
-        sleep(2);  
+        sleep(2);
         pthread_mutex_lock(&mutex2);
         printf("Thread %d cant be intpt\n", id);
         sleep(2);

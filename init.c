@@ -35,7 +35,7 @@ config_p load_configuration() {
 }
 
 void create_sem_shm() {
-    sem_shm = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
+    sem_shm = shmget(IPC_PRIVATE, sizeof(Sems), IPC_CREAT|0777);
     if(sem_shm == -1){
         perror("Error: ");
     }
@@ -43,6 +43,17 @@ void create_sem_shm() {
     if(shm_sem_doc == (void *)-1)
         perror("Error: ");
     return;
+}
+
+void create_lengths_shm(){
+    lengths_shm = shmget(IPC_PRIVATE, sizeof(Stats), IPC_CREAT|0777);
+    if(lengths_shm == -1){
+        perror("Error: ");
+    }
+    shm_lengths_p = shmat(lengths_shm, NULL, 0);
+    if(shm_lengths_p == (void *)-1){
+        perror("Error: ");
+    }
 }
 
 stats_p create_shared_memory() {
